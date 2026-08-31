@@ -3,20 +3,18 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
-# तुमची AQ वाली की
+# तुमची API Key व Passcode
 GEMINI_API_KEY = "AQ.Ab8RN6KIgJXzO93aOyl5DmTjYDLUqpzjZ49yPBK"
 OWNER_SECRET_KEY = "jarvis_boss_2026"
 
-client = genai.Client(api_key=GEMINI_API_KEY, http_options={'api_version': 'v1alpha'})
-chat = client.chats.create(
-    model="gemini-2.5-flash",
-    config=types.GenerateContentConfig(
-        system_instruction="You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."
-    )
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    system_instruction="You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."
 )
+chat = model.start_chat(history=[])
 
 app = FastAPI(title="JARVIS Private AI")
 
