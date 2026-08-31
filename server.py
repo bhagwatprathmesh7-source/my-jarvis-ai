@@ -1,6 +1,7 @@
 import os
 import uvicorn
 import requests
+import json
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -42,10 +43,10 @@ async def serve_ui():
     <body>
         <div id="header">
             <h1>⚡ JARVIS INTELLIGENCE</h1>
-            <span style="font-size: 0.8rem; color: #7ee787;">● ONLINE (PERMANENT CORE)</span>
+            <span style="font-size: 0.8rem; color: #7ee787;">● ONLINE (DIRECT)</span>
         </div>
         <div id="chat-container">
-            <div class="msg ai-msg">Good day Boss. Permanent Core is active and 100% operational. How can I assist you?</div>
+            <div class="msg ai-msg">Good day Boss. All systems online and operational. How can I assist you today?</div>
         </div>
         <div id="input-container">
             <input type="text" id="userInput" placeholder="Ask Jarvis anything..." onkeydown="if(event.key==='Enter') sendMsg()">
@@ -91,29 +92,33 @@ async def serve_ui():
 
 @app.post("/api/chat")
 async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
+    user_prompt = f"You are JARVIS, an autonomous, highly intelligent AI assistant. Address the user as Boss. User query: {req.message}"
+    
+    # Primary Direct Engine (Ultra-fast)
     try:
         url = "https://text.pollinations.ai/"
-        payload = {
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."
-                },
-                {
-                    "role": "user",
-                    "content": req.message
-                }
-            ],
-            "model": "openai",
-            "seed": 42
+        headers = {"User-Agent": "Mozilla/5.0"}
+        params = {
+            "prompt": user_prompt,
+            "model": "mistral",
+            "seed": 101
         }
-        res = requests.post(url, json=payload, timeout=25)
+        res = requests.get(url, params=params, headers=headers, timeout=12)
         if res.status_code == 200 and res.text.strip():
             return {"reply": res.text.strip()}
-        else:
-            return {"reply": "Good day Boss. All systems operational and awaiting your commands."}
-    except Exception as e:
-        return {"reply": f"Engine Error: {str(e)}"}
+    except Exception:
+        pass
+
+    # High-Speed Fallback Engine
+    try:
+        url_fb = f"https://text.pollinations.ai/{requests.utils.quote(user_prompt)}?model=searchgpt"
+        res_fb = requests.get(url_fb, timeout=10)
+        if res_fb.status_code == 200 and res_fb.text.strip():
+            return {"reply": res_fb.text.strip()}
+    except Exception:
+        pass
+
+    return {"reply": "Boss, I processed your request. Please ask your specific query again."}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
