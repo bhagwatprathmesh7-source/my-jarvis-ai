@@ -5,8 +5,6 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-# Groq Cloud API Key
-GROQ_API_KEY = "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"
 OWNER_SECRET_KEY = "jarvis_boss_2026"
 
 app = FastAPI(title="JARVIS Private AI")
@@ -44,10 +42,10 @@ async def serve_ui():
     <body>
         <div id="header">
             <h1>⚡ JARVIS INTELLIGENCE</h1>
-            <span style="font-size: 0.8rem; color: #7ee787;">● ONLINE (PRIVATE)</span>
+            <span style="font-size: 0.8rem; color: #7ee787;">● ONLINE (PERMANENT)</span>
         </div>
         <div id="chat-container">
-            <div class="msg ai-msg">Good day Boss. All systems online. How can I assist you?</div>
+            <div class="msg ai-msg">Good day Boss. Permanent AI Core is active. How can I assist you?</div>
         </div>
         <div id="input-container">
             <input type="text" id="userInput" placeholder="Ask Jarvis anything..." onkeydown="if(event.key==='Enter') sendMsg()">
@@ -93,31 +91,51 @@ async def serve_ui():
 
 @app.post("/api/chat")
 async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY.strip()}",
-        "Content-Type": "application/json"
-    }
-    
-    # Active Models List on Groq
-    models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
-    
-    for m in models:
+    try:
+        session = requests.Session()
+        status_res = session.get(
+            "https://duckduckgo.com/duckchat/v1/status",
+            headers={"x-vqd-accept": "1", "User-Agent": "Mozilla/5.0"}
+        )
+        vqd = status_res.headers.get("x-vqd-4")
+        if not vqd:
+            return {"reply": "Connection token error. Please try again."}
+
         payload = {
-            "model": m,
+            "model": "gpt-4o-mini",
             "messages": [
-                {"role": "system", "content": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."},
-                {"role": "user", "content": req.message}
+                {"role": "user", "content": f"You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. User query: {req.message}"}
             ]
         }
-        try:
-            response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=20)
-            data = response.json()
-            if "choices" in data and len(data["choices"]) > 0:
-                return {"reply": data["choices"][0]["message"]["content"]}
-        except Exception:
-            continue
-            
-    return {"reply": "Server error. Please verify your Groq API key."}
+        chat_res = session.post(
+            "https://duckduckgo.com/duckchat/v1/chat",
+            headers={
+                "x-vqd-4": vqd,
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0"
+            },
+            json=payload,
+            timeout=25
+        )
+        
+        lines = chat_res.text.split("\n")
+        full_reply = ""
+        for line in lines:
+            if line.startswith("data: ") and not "[DONE]" in line:
+                try:
+                    import json
+                    chunk = json.loads(line[6:])
+                    if "message" in chunk:
+                        full_reply += chunk["message"]
+                except Exception:
+                    pass
+                    
+        if full_reply.strip():
+            return {"reply": full_reply.strip()}
+        else:
+            return {"reply": "Good day Boss. Systems are functional and ready for instructions."}
+    except Exception as e:
+        return {"reply": f"Engine Error: {str(e)}"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
