@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-# OpenRouter द्वारे AI मॉडेल
+# OpenRouter द्वारे DeepSeek R1 मॉडेल
 OPENROUTER_API_KEY = "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"
 OWNER_SECRET_KEY = "jarvis_boss_2026"
 
@@ -43,11 +43,11 @@ async def serve_ui():
     </head>
     <body>
         <div id="header">
-            <h1>⚡ JARVIS INTELLIGENCE</h1>
+            <h1>⚡ JARVIS INTELLIGENCE (DeepSeek R1)</h1>
             <span style="font-size: 0.8rem; color: #7ee787;">● ONLINE (PRIVATE)</span>
         </div>
         <div id="chat-container">
-            <div class="msg ai-msg">Good day Boss. I am ready. How can I assist you?</div>
+            <div class="msg ai-msg">Good day Boss. DeepSeek R1 Reasoning Core is online. How can I assist you?</div>
         </div>
         <div id="input-container">
             <input type="text" id="userInput" placeholder="Ask Jarvis anything..." onkeydown="if(event.key==='Enter') sendMsg()">
@@ -100,7 +100,7 @@ async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
         "X-Title": "Jarvis AI"
     }
     payload = {
-        "model": "google/gemini-2.0-flash-thinking-exp:free",
+        "model": "deepseek/deepseek-r1:free",
         "messages": [
             {"role": "system", "content": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."},
             {"role": "user", "content": req.message}
