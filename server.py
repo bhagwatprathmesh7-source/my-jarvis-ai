@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-# OpenRouter द्वारे Google Gemini मॉडेल
+# OpenRouter द्वारे AI मॉडेल
 OPENROUTER_API_KEY = "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"
 OWNER_SECRET_KEY = "jarvis_boss_2026"
 
@@ -95,10 +95,12 @@ async def serve_ui():
 async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://my-jarvis-ai-pxv8.onrender.com",
+        "X-Title": "Jarvis AI"
     }
     payload = {
-        "model": "google/gemini-2.0-flash-exp:free",
+        "model": "google/gemini-2.0-flash-thinking-exp:free",
         "messages": [
             {"role": "system", "content": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."},
             {"role": "user", "content": req.message}
@@ -107,7 +109,7 @@ async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
     try:
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
         data = response.json()
-        if "choices" in data:
+        if "choices" in data and len(data["choices"]) > 0:
             return {"reply": data["choices"][0]["message"]["content"]}
         else:
             return {"reply": f"Error: {data}"}
@@ -116,4 +118,3 @@ async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
-    
