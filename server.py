@@ -5,8 +5,8 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-# तुमची AQ वाली की व Passcode
-GEMINI_AUTH_TOKEN = "AQ.Ab8RN6KIgJXzO93aOyl5DmTjYDLUqpzjZ49yPBK"
+# OpenRouter द्वारे Google Gemini मॉडेल
+OPENROUTER_API_KEY = "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"
 OWNER_SECRET_KEY = "jarvis_boss_2026"
 
 app = FastAPI(title="JARVIS Private AI")
@@ -93,27 +93,27 @@ async def serve_ui():
 
 @app.post("/api/chat")
 async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     headers = {
-        "Authorization": f"Bearer {GEMINI_AUTH_TOKEN}",
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json"
     }
     payload = {
-        "contents": [{"parts": [{"text": req.message}]}],
-        "systemInstruction": {
-            "parts": [{"text": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."}]
-        }
+        "model": "google/gemini-2.0-flash-exp:free",
+        "messages": [
+            {"role": "system", "content": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."},
+            {"role": "user", "content": req.message}
+        ]
     }
     try:
-        response = requests.post(url, json=payload, headers=headers)
-        res_data = response.json()
-        if "candidates" in res_data:
-            reply = res_data["candidates"][0]["content"]["parts"][0]["text"]
-            return {"reply": reply}
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
+        data = response.json()
+        if "choices" in data:
+            return {"reply": data["choices"][0]["message"]["content"]}
         else:
-            return {"reply": f"Error from Google: {res_data}"}
+            return {"reply": f"Error: {data}"}
     except Exception as e:
         return {"reply": f"Error: {e}"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
+    
