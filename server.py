@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 # Groq Cloud API Key
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 OWNER_SECRET_KEY = "jarvis_boss_2026"
 
 app = FastAPI(title="JARVIS Private AI")
