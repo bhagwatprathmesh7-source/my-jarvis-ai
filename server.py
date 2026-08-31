@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-OWNER_SECRET_KEY = "jarvis_boss_2026"
+OWNER_SECRET_KEY = "1234"
 
 app = FastAPI(title="JARVIS Private AI")
 
@@ -42,10 +42,10 @@ async def serve_ui():
     <body>
         <div id="header">
             <h1>⚡ JARVIS INTELLIGENCE</h1>
-            <span style="font-size: 0.8rem; color: #7ee787;">● ONLINE (PERMANENT)</span>
+            <span style="font-size: 0.8rem; color: #7ee787;">● ONLINE (PERMANENT CORE)</span>
         </div>
         <div id="chat-container">
-            <div class="msg ai-msg">Good day Boss. Permanent AI Core is active. How can I assist you?</div>
+            <div class="msg ai-msg">Good day Boss. Permanent Core is active and 100% operational. How can I assist you?</div>
         </div>
         <div id="input-container">
             <input type="text" id="userInput" placeholder="Ask Jarvis anything..." onkeydown="if(event.key==='Enter') sendMsg()">
@@ -92,48 +92,26 @@ async def serve_ui():
 @app.post("/api/chat")
 async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
     try:
-        session = requests.Session()
-        status_res = session.get(
-            "https://duckduckgo.com/duckchat/v1/status",
-            headers={"x-vqd-accept": "1", "User-Agent": "Mozilla/5.0"}
-        )
-        vqd = status_res.headers.get("x-vqd-4")
-        if not vqd:
-            return {"reply": "Connection token error. Please try again."}
-
+        url = "https://text.pollinations.ai/"
         payload = {
-            "model": "gpt-4o-mini",
             "messages": [
-                {"role": "user", "content": f"You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. User query: {req.message}"}
-            ]
+                {
+                    "role": "system",
+                    "content": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."
+                },
+                {
+                    "role": "user",
+                    "content": req.message
+                }
+            ],
+            "model": "openai",
+            "seed": 42
         }
-        chat_res = session.post(
-            "https://duckduckgo.com/duckchat/v1/chat",
-            headers={
-                "x-vqd-4": vqd,
-                "Content-Type": "application/json",
-                "User-Agent": "Mozilla/5.0"
-            },
-            json=payload,
-            timeout=25
-        )
-        
-        lines = chat_res.text.split("\n")
-        full_reply = ""
-        for line in lines:
-            if line.startswith("data: ") and not "[DONE]" in line:
-                try:
-                    import json
-                    chunk = json.loads(line[6:])
-                    if "message" in chunk:
-                        full_reply += chunk["message"]
-                except Exception:
-                    pass
-                    
-        if full_reply.strip():
-            return {"reply": full_reply.strip()}
+        res = requests.post(url, json=payload, timeout=25)
+        if res.status_code == 200 and res.text.strip():
+            return {"reply": res.text.strip()}
         else:
-            return {"reply": "Good day Boss. Systems are functional and ready for instructions."}
+            return {"reply": "Good day Boss. All systems operational and awaiting your commands."}
     except Exception as e:
         return {"reply": f"Engine Error: {str(e)}"}
 
