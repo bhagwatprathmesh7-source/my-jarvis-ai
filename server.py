@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-# Groq Cloud API
+# Groq Cloud API Key
 GROQ_API_KEY = "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"
 OWNER_SECRET_KEY = "jarvis_boss_2026"
 
@@ -94,25 +94,30 @@ async def serve_ui():
 @app.post("/api/chat")
 async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
     headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Authorization": f"Bearer {GROQ_API_KEY.strip()}",
         "Content-Type": "application/json"
     }
-    payload = {
-        "model": "llama-3.1-8b-instant",
-        "messages": [
-            {"role": "system", "content": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."},
-            {"role": "user", "content": req.message}
-        ]
-    }
-    try:
-        response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers)
-        data = response.json()
-        if "choices" in data and len(data["choices"]) > 0:
-            return {"reply": data["choices"][0]["message"]["content"]}
-        else:
-            return {"reply": f"Error: {data}"}
-    except Exception as e:
-        return {"reply": f"Error: {e}"}
+    
+    # Active Models List on Groq
+    models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+    
+    for m in models:
+        payload = {
+            "model": m,
+            "messages": [
+                {"role": "system", "content": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."},
+                {"role": "user", "content": req.message}
+            ]
+        }
+        try:
+            response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=20)
+            data = response.json()
+            if "choices" in data and len(data["choices"]) > 0:
+                return {"reply": data["choices"][0]["message"]["content"]}
+        except Exception:
+            continue
+            
+    return {"reply": "Server error. Please verify your Groq API key."}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
