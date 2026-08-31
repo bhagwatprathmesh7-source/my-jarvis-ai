@@ -5,8 +5,8 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-# OpenRouter Free AI Model
-OPENROUTER_API_KEY = "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"
+# कायमस्वरूपी मोफत आणि सुपरफास्ट Groq Cloud API
+GROQ_API_KEY = "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"
 OWNER_SECRET_KEY = "jarvis_boss_2026"
 
 app = FastAPI(title="JARVIS Private AI")
@@ -47,7 +47,7 @@ async def serve_ui():
             <span style="font-size: 0.8rem; color: #7ee787;">● ONLINE (PRIVATE)</span>
         </div>
         <div id="chat-container">
-            <div class="msg ai-msg">Good day Boss. Systems fully operational. How can I assist you?</div>
+            <div class="msg ai-msg">Good day Boss. All systems operational. How can I assist you?</div>
         </div>
         <div id="input-container">
             <input type="text" id="userInput" placeholder="Ask Jarvis anything..." onkeydown="if(event.key==='Enter') sendMsg()">
@@ -94,20 +94,18 @@ async def serve_ui():
 @app.post("/api/chat")
 async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://my-jarvis-ai-pxv8.onrender.com",
-        "X-Title": "Jarvis AI"
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
     }
     payload = {
-        "model": "meta-llama/llama-3.1-8b-instruct:free",
+        "model": "llama-3.3-70b-versatile",
         "messages": [
             {"role": "system", "content": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."},
             {"role": "user", "content": req.message}
         ]
     }
     try:
-        response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
+        response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers)
         data = response.json()
         if "choices" in data and len(data["choices"]) > 0:
             return {"reply": data["choices"][0]["message"]["content"]}
