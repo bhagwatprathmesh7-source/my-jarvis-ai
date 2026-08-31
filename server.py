@@ -1,20 +1,13 @@
 import os
 import uvicorn
+import requests
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-import google.generativeai as genai
 
-# तुमची API Key व Passcode
-GEMINI_API_KEY = "AQ.Ab8RN6KIgJXzO93aOyl5DmTjYDLUqpzjZ49yPBK"
+# तुमची AQ वाली की व Passcode
+GEMINI_AUTH_TOKEN = "AQ.Ab8RN6KIgJXzO93aOyl5DmTjYDLUqpzjZ49yPBK"
 OWNER_SECRET_KEY = "jarvis_boss_2026"
-
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
-    system_instruction="You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."
-)
-chat = model.start_chat(history=[])
 
 app = FastAPI(title="JARVIS Private AI")
 
@@ -100,9 +93,25 @@ async def serve_ui():
 
 @app.post("/api/chat")
 async def process_chat(req: ChatRequest, _ = Depends(verify_token)):
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+    headers = {
+        "Authorization": f"Bearer {GEMINI_AUTH_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "contents": [{"parts": [{"text": req.message}]}],
+        "systemInstruction": {
+            "parts": [{"text": "You are JARVIS, an autonomous, highly advanced, ultra-intelligent private AI. Address the user as Boss. Be direct, comprehensive, witty, and precise."}]
+        }
+    }
     try:
-        res = chat.send_message(req.message)
-        return {"reply": res.text}
+        response = requests.post(url, json=payload, headers=headers)
+        res_data = response.json()
+        if "candidates" in res_data:
+            reply = res_data["candidates"][0]["content"]["parts"][0]["text"]
+            return {"reply": reply}
+        else:
+            return {"reply": f"Error from Google: {res_data}"}
     except Exception as e:
         return {"reply": f"Error: {e}"}
 
