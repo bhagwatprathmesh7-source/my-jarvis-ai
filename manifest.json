@@ -1,8 +1,15 @@
 {
-  "name": "Omni Jarvis",
+  "name": "Omni Jarvis AI",
   "short_name": "Jarvis",
-  "start_url": "/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#010409",
-  "theme_color": "#00f0ff"
+  "theme_color": "#00f0ff",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/4712/4712109.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
