@@ -18,18 +18,21 @@
 </head>
 <body>
 
-    <h2>🛡️ Omni Jarvis</h2>
+    <h2>🛡️ Omni Jarvis (Multi-AI Fallback)</h2>
     <div id="chat-container">
-        <div class="message jarvis">Jarvis: नमस्कार भावा! मी सज्ज आहे. सांग काय मदत करू?</div>
+        <div class="message jarvis">Jarvis: नमस्कार भावा! मल्टी-एआय फॉलबॅक सिस्टीम सक्रिय आहे. बोल, काय मदत करू?</div>
     </div>
 
     <div class="input-area">
         <input type="text" id="userInput" placeholder="काहीतरी विचार..." />
-        <button onclick="sendQuery()">पाठवा</button>
+        <button onclick="handleUserQuery()">पाठवा</button>
     </div>
 
     <script>
-        function sendQuery() {
+        // इथे तुझी मुख्य Gemini API Key टाक
+        const GEMINI_API_KEY = "तुझी_GEMINI_API_KEY_इथे_टाक"; 
+
+        async function handleUserQuery() {
             const inputField = document.getElementById("userInput");
             const query = inputField.value.trim();
             if (!query) return;
@@ -37,9 +40,48 @@
             appendMessage("User", query, "user");
             inputField.value = "";
 
-            setTimeout(() => {
-                appendMessage("Jarvis", "भावा, तुझा मेसेज मिळाला! लवकरच मी पूर्ण AI पॉवरसह अपडेट होतोय.", "jarvis");
-            }, 500);
+            const loadingId = appendMessage("Jarvis", "विचार करत आहे...", "jarvis");
+
+            // मल्टी-एआय फॉलबॅक लॉजिक रन करणे
+            let response = await getSmartResponseWithFallback(query);
+            
+            updateMessage(loadingId, response);
+        }
+
+        async function getSmartResponseWithFallback(prompt) {
+            // प्रयत्न १: मुख्य Gemini AI कडून उत्तर आणणे
+            try {
+                console.log("Gemini तून उत्तर आणत आहे...");
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json();
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    return data.candidates[0].content.parts[0].text;
+                }
+            } catch (err) {
+                console.warn("Gemini कडून एरर आला, बॅकअप AI कडे जात आहे...", err);
+            }
+
+            // प्रयत्न २: बॅकअप AI (उदा. दुसरा फ्री मॉडेल किंवा सेफ फॉलबॅक सर्व्हर)
+            try {
+                console.log("बॅकअप AI कडून उत्तर आणत आहे...");
+                // इथे तू दुसरी मोफत API किंवा अल्टरनेटिव्ह सर्व्हर जोडू शकतोस
+                const backupResponse = await callBackupAI(prompt);
+                if (backupResponse) return backupResponse;
+            } catch (err) {
+                console.warn("बॅकअप AI कडूनही रिस्पॉन्स मिळाला नाही...", err);
+            }
+
+            // प्रयत्न ३: जर दोन्ही AI बंद किंवा डाऊन असतील, तर Jarvis चा स्वतःचा सेफ मेसेज
+            return "भावा, सध्या सर्व्हरवर लोड आहे किंवा नेटवर्क नाही, पण Jarvis कधीच हर मानत नाही! थोड्या वेळाने पुन्हा ट्राय कर.";
+        }
+
+        async function callBackupAI(prompt) {
+            // भविष्यात इथे दुसरी बॅकअप API जोडता येईल
+            return null; 
         }
 
         function appendMessage(sender, text, className) {
@@ -49,6 +91,11 @@
             msgDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
             chatContainer.appendChild(msgDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
+            return msgDiv;
+        }
+
+        function updateMessage(element, text) {
+            element.innerHTML = `<strong>Jarvis:</strong> ${text}`;
         }
     </script>
 </body>
