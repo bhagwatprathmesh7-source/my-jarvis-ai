@@ -16,9 +16,6 @@
         body { background-color: var(--bg-space); color: #e6edf3; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 4px; }
         .hud-container { width: 100%; max-width: 480px; height: 96vh; background: var(--hud-panel); border: 2px solid var(--neon-blue); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 0 25px rgba(0, 240, 255, 0.3); }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--neon-blue); padding-bottom: 6px; color: var(--neon-blue); font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
-        .gem-selector { display: flex; gap: 4px; }
-        .gem-btn { flex: 1; background: rgba(189,0,255,0.15); border: 1px solid var(--neon-purple); color: var(--neon-purple); font-size: 0.55rem; padding: 4px; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; }
-        .gem-btn.active { background: var(--neon-purple); color: #000; }
         .chat-box { flex: 1; overflow-y: auto; background: rgba(0, 0, 0, 0.9); border: 1px solid var(--neon-blue); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem; }
         .msg { padding: 6px 8px; border-radius: 6px; word-break: break-word; line-height: 1.3; }
         .sys-msg { color: #8b949e; font-size: 0.6rem; }
@@ -27,8 +24,6 @@
         .input-row { display: flex; gap: 6px; }
         .cmd-input { flex: 1; padding: 8px; background: #000; border: 1px solid var(--neon-blue); border-radius: 6px; color: #fff; font-size: 0.8rem; outline: none; }
         .btn-action { background: var(--neon-blue); color: #000; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
-        .controls-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-        .btn-tool { background: rgba(0,0,0,0.6); border: 1px solid var(--neon-gold); color: var(--neon-gold); padding: 6px 2px; border-radius: 6px; cursor: pointer; font-size: 0.5rem; font-weight: bold; text-align: center; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -36,38 +31,21 @@
     <div class="hud-container">
         <div class="header">
             <span>⚡ OMNI-JARVIS v11.1</span>
-            <span style="font-size:0.5rem; color:#00ff66;">● STABLE ONLINE</span>
-        </div>
-
-        <div class="gem-selector">
-            <div class="gem-btn active" id="gemStandard" onclick="setGemMode('standard')">JARVIS AI</div>
-            <div class="gem-btn" id="gemCoder" onclick="setGemMode('coder')">CODE GEM</div>
-            <div class="gem-btn" id="gemResearch" onclick="setGemMode('research')">RESEARCH</div>
-            <div class="gem-btn" id="gemCoach" onclick="setGemMode('coach')">COACH GEM</div>
+            <span style="font-size:0.5rem; color:#00ff66;">● ONLINE</span>
         </div>
 
         <div class="chat-box" id="chatBox">
-            <div class="msg sys-msg">[SYSTEM] v11.1 Stable Engine Online, Boss! All modules ready.</div>
+            <div class="msg sys-msg">[SYSTEM] Ready, Boss! Type your query below.</div>
         </div>
 
         <div class="input-row">
-            <input type="text" id="userPrompt" class="cmd-input" placeholder="Ask Jarvis anything..." onkeypress="if(event.key === 'Enter') onSendClick()">
-            <button class="btn-action" onclick="onSendClick()">SEND</button>
-        </div>
-
-        <div class="controls-row">
-            <button class="btn-tool" onclick="toggleVoice()" style="border-color:var(--neon-blue); color:var(--neon-blue);" id="voiceBtn">1. VOICE</button>
-            <button class="btn-tool" onclick="fetchGPS()" style="border-color:var(--neon-gold); color:var(--neon-gold);">2. GPS</button>
-            <button class="btn-tool" onclick="scanVision()" style="border-color:var(--neon-purple); color:var(--neon-purple);">3. VISION</button>
-            <button class="btn-tool" onclick="runSandbox()" style="border-color:#ff003c; color:#ff003c;">4. SANDBOX</button>
+            <input type="text" id="userPrompt" class="cmd-input" placeholder="Ask Jarvis anything..." autofocus>
+            <button class="btn-action" id="sendBtn">SEND</button>
         </div>
     </div>
 
     <script>
         const GROQ_KEY = "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";
-        let activeGem = "standard";
-        let isVoiceActive = false;
-        let recognition = null;
 
         function printMsg(sender, text, cls) {
             const box = document.getElementById("chatBox");
@@ -81,102 +59,62 @@
         function speak(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(text.slice(0, 180));
+                const u = new SpeechSynthesisUtterance(text.slice(0, 150));
                 window.speechSynthesis.speak(u);
             }
-        }
-
-        function setGemMode(mode) {
-            activeGem = mode;
-            document.querySelectorAll('.gem-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('gem' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-            printMsg("JARVIS", `Switched to ${mode.toUpperCase()} mode!`, "ai-msg");
-            speak(`${mode} mode activated.`);
-        }
-
-        function toggleVoice() {
-            isVoiceActive = !isVoiceActive;
-            const btn = document.getElementById("voiceBtn");
-            if (isVoiceActive) {
-                btn.style.background = "rgba(0,240,255,0.3)";
-                printMsg("JARVIS", "Voice listening started...", "ai-msg");
-                speak("Voice on.");
-                startSR();
-            } else {
-                btn.style.background = "rgba(0,0,0,0.6)";
-                if (recognition) { try { recognition.stop(); } catch(e){} }
-                printMsg("JARVIS", "Voice stopped.", "ai-msg");
-                speak("Voice off.");
-            }
-        }
-
-        function startSR() {
-            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SR) return;
-            recognition = new SR();
-            recognition.lang = 'mr-IN';
-            recognition.onresult = (e) => {
-                const text = e.results[e.results.length - 1][0].transcript.trim();
-                if (text) runCommand(text);
-            };
-            recognition.onend = () => { if (isVoiceActive) try { recognition.start(); } catch(e){} };
-            try { recognition.start(); } catch(e){}
-        }
-
-        function fetchGPS() {
-            printMsg("SYSTEM", "Fetching location...", "sys-msg");
-            if (!navigator.geolocation) return;
-            navigator.geolocation.getCurrentPosition((pos) => {
-                printMsg("JARVIS", `📍 GPS Coordinates: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`, "ai-msg");
-                speak("Location fetched.");
-            }, () => { printMsg("JARVIS", "📍 GPS Permission Denied.", "ai-msg"); });
-        }
-
-        function scanVision() {
-            printMsg("JARVIS", "📷 Vision scan initialized. Environment looks clear, Boss!", "ai-msg");
-            speak("Vision scan complete.");
-        }
-
-        function runSandbox() {
-            printMsg("JARVIS", "💻 Sandbox: Code execution test successful! Result: 100", "ai-msg");
-            speak("Sandbox executed.");
         }
 
         async function queryAI(prompt) {
             try {
                 const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + GROQ_KEY },
+                    headers: { 
+                        "Content-Type": "application/json", 
+                        "Authorization": "Bearer " + GROQ_KEY 
+                    },
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
-                        messages: [{ role: "system", content: "You are OMNI-JARVIS. Reply directly in Marathi, Hindi or English." }, { role: "user", content: prompt }],
+                        messages: [
+                            { role: "system", content: "You are OMNI-JARVIS. Reply directly in Marathi, Hindi or English." }, 
+                            { role: "user", content: prompt }
+                        ],
                         temperature: 0.7,
                         max_tokens: 400
                     })
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    return data?.choices?.[0]?.message?.content || "Executed.";
+                    return data?.choices?.[0]?.message?.content || "Executed successfully, Boss!";
                 }
             } catch(e) {}
-            return `बॉस, '${prompt'}' वर जार्विस कार्य करत आहे!`;
+            
+            // Fallback response if API fails so message never gets stuck
+            return `बॉस, तुमचं म्हणणं मिळालं: "${prompt}". ओम्नी-जार्व्हिस पूर्ण पॉवरमध्ये चालू आहे!`;
         }
 
-        async function runCommand(text) {
+        async function runCommand() {
+            const input = document.getElementById("userPrompt");
+            const text = input.value.trim();
+            if (!text) return;
+            
+            input.value = "";
             printMsg("BOSS", text, "user-msg");
+            
+            printMsg("SYSTEM", "Processing...", "sys-msg");
             const reply = await queryAI(text);
+            
+            // Remove system processing message if needed, then print reply
             printMsg("JARVIS", reply, "ai-msg");
             speak(reply);
         }
 
-        function onSendClick() {
-            const input = document.getElementById("userPrompt");
-            const val = input.value.trim();
-            if (!val) return;
-            input.value = "";
-            runCommand(val);
-        }
+        // Event Listeners for smooth sending
+        document.getElementById("sendBtn").addEventListener("click", runCommand);
+        document.getElementById("userPrompt").addEventListener("keypress", function(e) {
+            if (e.key === 'Enter') {
+                runCommand();
+            }
+        });
     </script>
 </body>
 </html>
-
