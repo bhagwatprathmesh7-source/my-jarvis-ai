@@ -1,348 +1,315 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OMNI-JARVIS v12.1 STABLE NEXUS</title>
-    <style>
-        :root {
-            --neon-blue: #00f0ff;
-            --neon-gold: #ffb700;
-            --neon-red: #ff003c;
-            --neon-purple: #bd00ff;
-            --neon-green: #00ff66;
-            --bg-space: #010409;
-            --hud-panel: rgba(4, 11, 24, 0.95);
-            --glow: rgba(0, 240, 255, 0.4);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
-        body { background-color: var(--bg-space); color: #e6edf3; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 4px; overflow-x: hidden; transition: background 0.5s ease; }
-        
-        .hud-container { width: 100%; max-width: 480px; background: var(--hud-panel); border: 2px solid var(--neon-blue); border-radius: 14px; padding: 10px; box-shadow: 0 0 35px var(--glow); display: flex; flex-direction: column; gap: 8px; backdrop-filter: blur(8px); position: relative; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--neon-blue); padding-bottom: 5px; color: var(--neon-blue); font-weight: bold; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
-        .badge { font-size: 0.5rem; padding: 2px 5px; border: 1px solid var(--neon-purple); color: var(--neon-purple); border-radius: 6px; background: rgba(189,0,255,0.1); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
-        
-        .core-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-        .hud-card { background: rgba(0,0,0,0.65); border: 1px solid rgba(0,240,255,0.3); border-radius: 8px; padding: 6px; text-align: center; }
-        
-        .reactor-core { width: 34px; height: 34px; border: 2px dashed var(--neon-blue); border-radius: 50%; margin: 0 auto 3px auto; display: flex; justify-content: center; align-items: center; animation: spin 4s linear infinite; box-shadow: 0 0 10px var(--neon-blue); }
-        .reactor-inner { width: 15px; height: 15px; background: var(--neon-purple); border-radius: 50%; box-shadow: 0 0 12px var(--neon-purple); }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .telemetry-row { display: flex; justify-content: space-between; font-size: 0.55rem; color: var(--neon-gold); margin-top: 2px; }
-        .hud-title { font-size: 0.48rem; color: var(--neon-blue); text-transform: uppercase; margin-bottom: 2px; }
-        
-        .gem-selector { display: flex; gap: 4px; margin-bottom: 2px; }
-        .gem-btn { flex: 1; background: rgba(189,0,255,0.15); border: 1px solid var(--neon-purple); color: var(--neon-purple); font-size: 0.5rem; padding: 3px; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; }
-        .gem-btn.active { background: var(--neon-purple); color: #000; }
-        
-        .chat-box { height: 130px; overflow-y: auto; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem; }
-        .msg { padding: 5px 8px; border-radius: 6px; word-break: break-word; line-height: 1.3; }
-        .sys-msg { color: #8b949e; font-size: 0.6rem; }
-        .user-msg { align-self: flex-end; background: rgba(0, 102, 153, 0.6); border: 1px solid var(--neon-blue); color: #fff; max-width: 85%; }
-        .ai-msg { align-self: flex-start; border: 1px solid var(--neon-gold); color: var(--neon-gold); background: rgba(255,183,0,0.05); max-width: 88%; white-space: pre-wrap; }
-        .code-output { background: #050b14; border: 1px dashed var(--neon-purple); color: #00ff66; padding: 6px; border-radius: 6px; font-size: 0.65rem; margin-top: 4px; white-space: pre-wrap; }
-        
-        .input-row { display: flex; gap: 6px; width: 100%; }
-        .cmd-input { flex: 1; padding: 8px; background: #000; border: 1px solid var(--neon-blue); border-radius: 6px; color: #fff; font-size: 0.8rem; outline: none; }
-        .btn-action { background: var(--neon-blue); color: #000; border: none; padding: 8px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
-        
-        .controls-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
-        .btn-tool { background: rgba(0,0,0,0.6); border: 1px solid var(--neon-gold); color: var(--neon-gold); padding: 5px 2px; border-radius: 6px; cursor: pointer; font-size: 0.48rem; font-weight: bold; text-align: center; text-transform: uppercase; }
-        .btn-tool:hover { background: rgba(255,183,0,0.2); }
-        
-        .cam-preview { width: 100%; height: 90px; background: #000; border: 1px solid var(--neon-purple); border-radius: 6px; display: none; object-fit: cover; margin-top: 4px; }
-        body.red-alert { animation: redFlash 1s infinite alternate; }
-        @keyframes redFlash { 0% { background-color: var(--bg-space); } 100% { background-color: rgba(255, 0, 60, 0.4); } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S — Autonomous Interface</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --c-blue:#38bdf8;
+    --c-blue-glow: 56,189,248;
+    --c-purple:#a78bfa;
+    --c-purple-glow: 167,139,250;
+    --c-green:#34d399;
+    --c-green-glow: 52,211,153;
+    --c-red:#f87171;
+    --c-red-glow: 248,113,113;
+    --mood: var(--c-blue);
+    --mood-glow: var(--c-blue-glow);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ background:#040608; height:100%; overflow:hidden; }
+  body{ font-family:'Rajdhani',sans-serif; color:#dce8f5; }
+  .font-display{ font-family:'Orbitron',sans-serif; }
+  .font-mono{ font-family:'Share Tech Mono',monospace; }
+
+  #bg-canvas{ position:fixed; inset:0; z-index:0; }
+  .scanlines::before{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:40;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode:overlay;
+  }
+  .vignette::after{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:39;
+    background:radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.65) 100%);
+  }
+
+  .glass{
+    background:linear-gradient(160deg, rgba(15,23,42,0.55), rgba(8,12,22,0.65));
+    backdrop-filter: blur(14px);
+    border:1px solid rgba(var(--mood-glow),0.25);
+    box-shadow: 0 0 0 1px rgba(var(--mood-glow),0.05) inset, 0 8px 30px -12px rgba(0,0,0,0.7);
+    transition: border-color .6s ease, box-shadow .6s ease;
+  }
+  .glass-corner{ position:relative; }
+  .glass-corner::before, .glass-corner::after{
+    content:''; position:absolute; width:10px; height:10px; border-color:rgba(var(--mood-glow),0.8); pointer-events:none;
+  }
+  .glass-corner::before{ top:-1px; left:-1px; border-top:2px solid; border-left:2px solid; }
+  .glass-corner::after{ bottom:-1px; right:-1px; border-bottom:2px solid; border-right:2px solid; }
+
+  .mood-text{ color: var(--mood); transition: color .6s ease; }
+  .mood-border{ border-color: rgba(var(--mood-glow),0.5) !important; transition:border-color .6s ease; }
+  .mood-glow-shadow{ box-shadow: 0 0 24px 2px rgba(var(--mood-glow),0.35); transition: box-shadow .6s ease; }
+  .mood-fill{ background-color: var(--mood); transition: background-color .6s ease; }
+
+  ::-webkit-scrollbar{ width:6px; height:6px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:rgba(var(--mood-glow),0.4); border-radius:4px; }
+
+  /* Reactor */
+  .reactor-wrap{ position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+  .reactor-ring{ position:absolute; border-radius:50%; border:1px solid rgba(var(--mood-glow),0.35); }
+  .ring-spin-slow{ animation: spin 14s linear infinite; }
+  .ring-spin-rev{ animation: spin 9s linear infinite reverse; }
+  .ring-spin-fast{ animation: spin 5s linear infinite; }
+  @keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  @keyframes pulse-core{ 0%,100%{ transform:scale(1); opacity:.9 } 50%{ transform:scale(1.08); opacity:1 } }
+  .core-pulse{ animation: pulse-core 2.6s ease-in-out infinite; }
+  @keyframes ping-slow{ 0%{ transform:scale(.9); opacity:.6 } 100%{ transform:scale(1.9); opacity:0 } }
+  .ping-ring{ animation: ping-slow 2.8s ease-out infinite; }
+
+  /* Typing dots */
+  @keyframes blink-dot{ 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+  .dot{ animation: blink-dot 1.2s infinite; }
+  .dot:nth-child(2){ animation-delay:.15s } .dot:nth-child(3){ animation-delay:.3s }
+
+  /* Boot */
+  #boot-screen{ position:fixed; inset:0; z-index:100; background:#020304; }
+  .boot-log-line{ opacity:0; animation: fadein-line .25s forwards; }
+  @keyframes fadein-line{ to{ opacity:1 } }
+
+  .ticker-track{ display:inline-block; white-space:nowrap; animation: ticker-scroll 32s linear infinite; padding-left:100%; }
+  @keyframes ticker-scroll{ from{ transform:translateX(0) } to{ transform:translateX(-100%) } }
+
+  input[type=range]{ accent-color: var(--c-purple); }
+  .tab-active{ background:rgba(var(--mood-glow),0.12); border-color:rgba(var(--mood-glow),0.6) !important; color:#fff; }
+  .msg-in{ animation: msg-rise .35s ease both; }
+  @keyframes msg-rise{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)} }
+
+  textarea::placeholder, input::placeholder{ color:#5b7290; }
+
+  .flicker{ animation: flicker 3.4s infinite; }
+  @keyframes flicker{ 0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.4} 94%{opacity:1} 96%{opacity:.6} 97%{opacity:1} }
+
+  .btn-icon{ transition: all .2s ease; }
+  .btn-icon:hover{ transform: translateY(-1px); }
+  .btn-icon:active{ transform: translateY(0) scale(.94); }
+
+  #sos-btn.armed{ animation: sos-throb 1s infinite; }
+  @keyframes sos-throb{ 0%,100%{ box-shadow:0 0 0 0 rgba(248,113,113,.6)} 50%{ box-shadow:0 0 0 10px rgba(248,113,113,0)} }
+
+  .modal-backdrop{ background:rgba(2,4,8,0.75); backdrop-filter: blur(6px); }
+</style>
 </head>
-<body id="appBody">
+<body class="scanlines vignette">
 
-<div class="hud-container" id="mainContainer">
-    <div class="header">
-        <span>⚡ OMNI-JARVIS v12.1 STABLE</span>
-        <span class="badge" id="sysBadge">● ALL MODULES ACTIVE</span>
+<canvas id="bg-canvas"></canvas>
+
+<!-- ===================== BOOT SEQUENCE ===================== -->
+<div id="boot-screen" class="flex flex-col items-center justify-center">
+  <canvas id="boot-canvas" class="absolute inset-0 w-full h-full opacity-70"></canvas>
+  <div class="relative z-10 flex flex-col items-center gap-6 px-6">
+    <div class="relative w-40 h-40 flex items-center justify-center">
+      <div class="absolute inset-0 rounded-full border border-sky-400/30 ring-spin-slow"></div>
+      <div class="absolute inset-3 rounded-full border border-sky-400/50 ring-spin-rev"></div>
+      <div class="absolute inset-7 rounded-full border-2 border-sky-300/70 ring-spin-fast"></div>
+      <div class="w-10 h-10 rounded-full bg-sky-300 core-pulse" style="box-shadow:0 0 40px 10px rgba(56,189,248,0.6)"></div>
+    </div>
+    <div class="font-display text-sky-300 tracking-[0.4em] text-sm">INITIALIZING</div>
+    <div class="w-72 sm:w-96 h-40 font-mono text-[11px] sm:text-xs text-sky-400/90 overflow-hidden" id="boot-log"></div>
+    <div class="w-72 sm:w-96 h-1 bg-sky-950 rounded overflow-hidden">
+      <div id="boot-bar" class="h-full bg-sky-400" style="width:0%; box-shadow:0 0 10px rgba(56,189,248,.8); transition:width .1s linear"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP ROOT ===================== -->
+<div id="app" class="relative z-10 hidden h-screen w-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="glass mood-border border-b flex items-center justify-between px-3 sm:px-5 py-2.5 gap-3 shrink-0">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="relative w-8 h-8 sm:w-9 sm:h-9 shrink-0">
+        <div class="absolute inset-0 rounded-full border mood-border ring-spin-slow"></div>
+        <div class="absolute inset-1.5 rounded-full mood-fill core-pulse"></div>
+      </div>
+      <div class="min-w-0">
+        <h1 class="font-display text-sm sm:text-lg tracking-[0.15em] mood-text truncate">J.A.R.V.I.S</h1>
+        <p class="font-mono text-[9px] sm:text-[10px] text-slate-400 -mt-0.5 truncate">Just A Rather Very Intelligent System</p>
+      </div>
     </div>
 
-    <!-- GEMS SELECTOR -->
-    <div class="gem-selector">
-        <div class="gem-btn active" id="gemStandard" onclick="setGemMode('standard')">JARVIS AI</div>
-        <div class="gem-btn" id="gemCoder" onclick="setGemMode('coder')">CODE GEM</div>
-        <div class="gem-btn" id="gemResearch" onclick="setGemMode('research')">RESEARCH</div>
-        <div class="gem-btn" id="gemCoach" onclick="setGemMode('coach')">COACH GEM</div>
+    <div class="hidden md:flex items-center gap-2 font-mono text-[11px] text-slate-400">
+      <span class="w-1.5 h-1.5 rounded-full mood-fill flicker"></span>
+      <span id="mood-label" class="mood-text tracking-widest">IDLE</span>
+      <span class="opacity-40">|</span>
+      <span>ONLINE FOR <span id="uptime" class="text-slate-200">00:00:00</span></span>
     </div>
 
-    <div class="core-dashboard">
-        <div class="hud-card">
-            <div class="hud-title">AI CORE STATUS</div>
-            <div class="reactor-core"><div class="reactor-inner"></div></div>
-            <div style="font-size:0.5rem; color:#00ff66;" id="voiceStatus">1. WAKE-WORD READY</div>
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <select id="suit-select" class="glass mood-border border rounded-md text-[10px] sm:text-xs font-mono px-2 py-1.5 bg-transparent outline-none">
+        <option value="jarvis">JARVIS // STANDARD</option>
+        <option value="mk2">MARK II // SILVER</option>
+        <option value="warmachine">WAR MACHINE // GUNMETAL</option>
+        <option value="rescue">RESCUE // ROSE</option>
+      </select>
+      <button id="settings-btn" class="btn-icon glass mood-border border rounded-md p-2" title="System Panel">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mood-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- BODY GRID -->
+  <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[220px_1fr_260px] gap-2 p-2">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="hidden lg:flex flex-col gap-2 min-h-0">
+      <div class="glass glass-corner mood-border border rounded-lg p-3">
+        <p class="font-display text-[10px] tracking-[0.2em] text-slate-400 mb-2">GEM MODE</p>
+        <div class="grid grid-cols-2 gap-1.5" id="gem-modes">
+          <button data-mode="Standard" class="gem-btn tab-active border rounded-md py-1.5 text-[11px] font-mono glass mood-border">Standard</button>
+          <button data-mode="Coder" class="gem-btn border rounded-md py-1.5 text-[11px] font-mono glass border-slate-700">Coder</button>
+          <button data-mode="Research" class="gem-btn border rounded-md py-1.5 text-[11px] font-mono glass border-slate-700">Research</button>
+          <button data-mode="Coach" class="gem-btn border rounded-md py-1.5 text-[11px] font-mono glass border-slate-700">Coach</button>
         </div>
-        <div class="hud-card" style="display:flex; flex-direction:column; justify-content:space-around;">
-            <div class="hud-title">TELEMETRY & RADAR</div>
-            <div class="telemetry-row"><span>CPU TEMP:</span> <span style="color:#00ff66;" id="cpuTemp">38.4°C</span></div>
-            <div class="telemetry-row"><span>BATTERY:</span> <span style="color:var(--neon-blue);" id="batStatus">94% [⚡]</span></div>
-            <div class="telemetry-row"><span>MOOD:</span> <span style="color:var(--neon-gold);" id="moodStatus">FOCUSED</span></div>
-            <div class="telemetry-row"><span>SECURE:</span> <span style="color:var(--neon-green);">5G MESH</span></div>
+      </div>
+
+      <div class="glass glass-corner mood-border border rounded-lg p-3 flex-1 min-h-0 flex flex-col">
+        <p class="font-display text-[10px] tracking-[0.2em] text-slate-400 mb-2">UTILITIES</p>
+        <div class="grid grid-cols-2 gap-1.5 overflow-y-auto pr-0.5" id="util-buttons">
+          <button data-util="todo" class="util-btn border border-slate-700 glass rounded-md py-2 text-[10px] font-mono flex flex-col items-center gap-1">✓ Todo</button>
+          <button data-util="notes" class="util-btn border border-slate-700 glass rounded-md py-2 text-[10px] font-mono flex flex-col items-center gap-1">✎ Notes</button>
+          <button data-util="calc" class="util-btn border border-slate-700 glass rounded-md py-2 text-[10px] font-mono flex flex-col items-center gap-1">⌗ Calc</button>
+          <button data-util="convert" class="util-btn border border-slate-700 glass rounded-md py-2 text-[10px] font-mono flex flex-col items-center gap-1">⇄ Convert</button>
+          <button data-util="search" class="util-btn border border-slate-700 glass rounded-md py-2 text-[10px] font-mono flex flex-col items-center gap-1">⌕ Search</button>
+          <button data-util="pdf" class="util-btn border border-slate-700 glass rounded-md py-2 text-[10px] font-mono flex flex-col items-center gap-1">▤ PDF</button>
+          <button data-util="translate" class="util-btn border border-slate-700 glass rounded-md py-2 text-[10px] font-mono flex flex-col items-center gap-1">語 Translate</button>
+          <button data-util="sandbox" class="util-btn border border-slate-700 glass rounded-md py-2 text-[10px] font-mono flex flex-col items-center gap-1">&lt;/&gt; Sandbox</button>
+          <button data-util="camera" class="util-btn border border-slate-700 glass rounded-md py-2 text-[10px] font-mono flex flex-col items-center gap-1">◎ Vision</button>
+          <button data-util="gps" class="util-btn border border-slate-700 glass rounded-md py-2 text-[10px] font-mono flex flex-col items-center gap-1">⌖ GPS</button>
         </div>
+      </div>
+
+      <button id="deploy-btn" class="glass glass-corner border border-purple-500/50 rounded-lg py-2.5 font-display text-[11px] tracking-[0.15em] text-purple-300 hover:bg-purple-500/10 transition">
+        ⚡ DEPLOY MARK 42
+      </button>
+    </aside>
+
+    <!-- CENTER CHAT -->
+    <main class="glass glass-corner mood-border border rounded-lg flex flex-col min-h-0 relative overflow-hidden">
+      <!-- reactor watermark -->
+      <div class="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none">
+        <div class="reactor-wrap" style="width:340px;height:340px;">
+          <div class="reactor-ring ring-spin-slow" style="width:340px;height:340px;"></div>
+          <div class="reactor-ring ring-spin-rev" style="width:250px;height:250px;"></div>
+          <div class="reactor-ring ring-spin-fast" style="width:160px;height:160px; border-width:2px;"></div>
+        </div>
+      </div>
+
+      <!-- mobile top bar -->
+      <div class="lg:hidden flex items-center justify-between px-3 py-2 border-b border-slate-800 font-mono text-[10px] text-slate-400">
+        <span>ONLINE <span id="uptime-mobile" class="text-slate-200">00:00:00</span></span>
+        <span id="mood-label-mobile" class="mood-text tracking-widest">IDLE</span>
+      </div>
+
+      <div id="chat-log" class="relative flex-1 min-h-0 overflow-y-auto px-3 sm:px-5 py-4 space-y-3"></div>
+
+      <div id="typing-indicator" class="hidden px-5 pb-1 font-mono text-xs text-slate-400 items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full mood-fill dot"></span>
+        <span class="w-1.5 h-1.5 rounded-full mood-fill dot"></span>
+        <span class="w-1.5 h-1.5 rounded-full mood-fill dot"></span>
+        <span id="typing-label">JARVIS is composing a response</span>
+      </div>
+
+      <!-- source cascade indicator -->
+      <div id="cascade-strip" class="hidden px-5 pb-1 font-mono text-[10px] text-slate-500 gap-3 items-center">
+        <span id="cascade-groq" class="px-1.5 py-0.5 rounded border border-slate-700">GROQ</span>
+        <span id="cascade-cohere" class="px-1.5 py-0.5 rounded border border-slate-700">COHERE</span>
+        <span id="cascade-local" class="px-1.5 py-0.5 rounded border border-slate-700">LOCAL</span>
+      </div>
+
+      <!-- input bar -->
+      <div class="border-t border-slate-800 p-2 sm:p-3">
+        <div class="flex items-end gap-1.5 sm:gap-2">
+          <button id="mic-btn" title="Voice input (Marathi)" class="btn-icon glass mood-border border rounded-lg p-2.5 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mood-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+          </button>
+          <button id="cam-btn" title="Vision scan" class="btn-icon glass mood-border border rounded-lg p-2.5 shrink-0 hidden sm:block">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mood-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </button>
+          <textarea id="chat-input" rows="1" placeholder="Speak your command, sir..." class="flex-1 resize-none bg-slate-950/50 rounded-lg px-3 py-2.5 text-sm font-mono outline-none border border-slate-800 focus:mood-border transition-colors max-h-28"></textarea>
+          <button id="sos-btn" title="Emergency SOS" class="btn-icon glass border border-red-500/50 rounded-lg p-2.5 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          </button>
+          <button id="send-btn" class="btn-icon mood-fill mood-glow-shadow rounded-lg px-4 py-2.5 font-display text-xs text-slate-900 font-bold shrink-0">SEND</button>
+        </div>
+        <p id="voice-status" class="font-mono text-[10px] text-slate-500 mt-1.5 h-3"></p>
+      </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="hidden lg:flex flex-col gap-2 min-h-0 overflow-y-auto pr-0.5">
+      <div class="glass glass-corner mood-border border rounded-lg p-3">
+        <p class="font-display text-[10px] tracking-[0.2em] text-slate-400 mb-2">WEATHER</p>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-2xl font-display text-slate-100" id="weather-temp">24°C</p>
+            <p class="text-[11px] text-slate-400" id="weather-desc">Clear skies</p>
+          </div>
+          <div class="text-3xl" id="weather-icon">☀️</div>
+        </div>
+      </div>
+
+      <div class="glass glass-corner mood-border border rounded-lg p-3">
+        <p class="font-display text-[10px] tracking-[0.2em] text-slate-400 mb-2">WORLD CLOCK</p>
+        <div class="space-y-1 font-mono text-[11px]" id="world-clock"></div>
+      </div>
+
+      <div class="glass glass-corner mood-border border rounded-lg p-3">
+        <p class="font-display text-[10px] tracking-[0.2em] text-slate-400 mb-1">STARDATE</p>
+        <p class="font-mono text-sm text-slate-200" id="stardate">—</p>
+      </div>
+
+      <div class="glass glass-corner mood-border border rounded-lg p-3">
+        <p class="font-display text-[10px] tracking-[0.2em] text-slate-400 mb-2">SYSTEM VITALS</p>
+        <div class="space-y-2 text-[11px] font-mono">
+          <div class="flex justify-between"><span class="text-slate-400">BATTERY</span><span id="battery-status" class="text-slate-200">—</span></div>
+          <div class="w-full h-1.5 rounded bg-slate-800 overflow-hidden"><div id="battery-bar" class="h-full mood-fill" style="width:0%"></div></div>
+          <div class="flex justify-between pt-1"><span class="text-slate-400">NETWORK</span><span id="network-status" class="text-slate-200">—</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">LOCATION</span><span id="gps-status" class="text-slate-200 text-right">Standby</span></div>
+        </div>
+      </div>
+
+      <div class="glass glass-corner mood-border border rounded-lg p-3 flex-1 min-h-[100px]">
+        <p class="font-display text-[10px] tracking-[0.2em] text-slate-400 mb-2">CONTEXT MEMORY</p>
+        <div id="context-memory" class="space-y-1.5 font-mono text-[10px] text-slate-400 max-h-40 overflow-y-auto"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TICKER -->
+  <footer class="glass mood-border border-t px-0 py-1.5 shrink-0 overflow-hidden">
+    <div class="font-mono text-[10px] sm:text-[11px] text-slate-400 whitespace-nowrap">
+      <span class="ticker-track" id="ticker-track">LOADING STATUS FEED —</span>
     </div>
+  </footer>
+</div>
 
-    <video id="webcam" class="cam-preview" autoplay playsinline muted></video>
-    <canvas id="snapshotCanvas" style="display:none;"></canvas>
-
-    <div class="chat-box" id="chatBox">
-        <div class="msg sys-msg">[SYSTEM] v12.1 Stable Nexus Online. All features operational, Boss!</div>
+<!-- ===================== UTILITY MODAL ===================== -->
+<div id="modal-backdrop" class="fixed inset-0 z-50 modal-backdrop hidden items-center justify-center p-4">
+  <div class="glass glass-corner mood-border border rounded-xl w-full max-w-md max-h-[85vh] overflow-y-auto p-4 sm:p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h2 id="modal-title" class="font-display text-sm tracking-widest mood-text">UTILITY</h2>
+      <button id="modal-close" class="text-slate-400 hover:text-white text-lg leading-none">✕</button>
     </div>
-
-    <div class="input-row">
-        <input type="text" id="userPrompt" class="cmd-input" placeholder="Type prompt or command..." onkeypress="if(event.key === 'Enter') onSendClick()" oninput="trackTypingSpeed()">
-        <button class="btn-action" onclick="onSendClick()">EXECUTE ⚡</button>
-    </div>
-
-    <!-- CONTROLS GRID: All 12 Features Accessible -->
-    <div class="controls-grid">
-        <button class="btn-tool" onclick="toggleWakeWord()" style="color:var(--neon-blue); border-color:var(--neon-blue);">1. WAKE-WORD</button>
-        <button class="btn-tool" onclick="runLocalRAG()">2. LOCAL RAG</button>
-        <button class="btn-tool" onclick="runRPAMacro()">3. RPA MACRO</button>
-        <button class="btn-tool" onclick="triggerMood()">4. MOOD AI</button>
-        
-        <button class="btn-tool" onclick="toggleGestures()" style="color:var(--neon-purple); border-color:var(--neon-purple);">5. VISION</button>
-        <button class="btn-tool" onclick="toggleSubAgents()">6. SUB-AGENTS</button>
-        <button class="btn-tool" onclick="runSelfHeal()">7. SELF-HEAL</button>
-        <button class="btn-tool" onclick="openNeuralGraph()">8. NEURAL 3D</button>
-
-        <button class="btn-tool" onclick="toggleAmbient()" style="color:var(--neon-gold); border-color:var(--neon-gold);">9. AMBIENT</button>
-        <button class="btn-tool" onclick="triggerLockdown()" style="color:var(--neon-red); border-color:var(--neon-red);">10. LOCKDOWN</button>
-        <button class="btn-tool" onclick="openVault()">11. VAULT</button>
-        <button class="btn-tool" onclick="fetchTelemetry()">12. RADAR</button>
-    </div>
+    <div id="modal-body" class="text-sm"></div>
+  </div>
 </div>
 
 <script>
-    const GROQ_KEY = "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";
-    const COHERE_KEY = "20xrjAOQAXSdeU5HnjsKf2IpbmkfPA2Vki9xKu1U";
-    const ELEVEN_KEY = "sk_74df699c74e7a19d485b4941a66d3d7c4389c37843c2efc3";
-    const VOICE_ID = "ThT5KcBeYPX3keUQqHPh";
-    
-    let history = [];
-    let audioPlayer = new Audio();
-    let isWakeActive = false, isSubActive = false, isAmbActive = false, isGestActive = false;
-    let recognition = null;
-    let activeGem = "standard";
-    let lastKeyTime = Date.now(), typingSpeeds = [], userMood = "FOCUSED";
-
-    function trackTypingSpeed() {
-        const now = Date.now();
-        const diff = now - lastKeyTime;
-        lastKeyTime = now;
-        typingSpeeds.push(diff);
-        if (typingSpeeds.length > 8) typingSpeeds.shift();
-        const avg = typingSpeeds.reduce((a,b)=>a+b,0) / typingSpeeds.length;
-        userMood = avg < 90 ? "FAST / STRESSED" : (avg > 350 ? "RELAXED" : "FOCUSED");
-        document.getElementById("moodStatus").innerText = userMood;
-    }
-
-    function printMsg(sender, text, cls, codeRes = null) {
-        const box = document.getElementById("chatBox");
-        const div = document.createElement("div");
-        div.className = "msg " + cls;
-        let html = "<b>" + sender + ":</b> " + text;
-        if (codeRes) html += `<div class="code-output">⚡ [OUTPUT]:\n${codeRes}</div>`;
-        div.innerHTML = html;
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
-    }
-
-    async function speak(text) {
-        const clean = text.replace(/[*#_`~[\]()]/g, '');
-        const snippet = clean.length > 200 ? clean.slice(0, 200) + "..." : clean;
-        try {
-            const res = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID, {
-                method: "POST",
-                headers: { "xi-api-key": ELEVEN_KEY, "Content-Type": "application/json" },
-                body: JSON.stringify({ text: snippet, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.35 } })
-            });
-            if (res.ok) {
-                audioPlayer.src = URL.createObjectURL(await res.blob());
-                audioPlayer.play().catch(()=>{});
-                return;
-            }
-        } catch(e) {}
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance(snippet));
-        }
-    }
-
-    function setGemMode(mode) {
-        activeGem = mode;
-        document.querySelectorAll('.gem-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('gem' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-        printMsg("JARVIS", `✨ [GEM]: Switched to ${mode.toUpperCase()} mode!`, "ai-msg");
-        speak(`${mode} मोड सुरू.`);
-    }
-
-    // 1. WAKE-WORD ENGINE
-    function toggleWakeWord() {
-        isWakeActive = !isWakeActive;
-        const status = document.getElementById("voiceStatus");
-        if (isWakeActive) {
-            status.innerText = "1. WAKE LISTENING";
-            printMsg("JARVIS", "🎙️ [WAKE-WORD] 'Jarvis' व्हॉइस ट्रिगर सुरू झाला आहे!", "ai-msg");
-            speak("जार्व्हिस ट्रिगर ऑन.");
-            startVoiceRec();
-        } else {
-            status.innerText = "1. WAKE-WORD OFF";
-            if(recognition) try{recognition.stop();}catch(e){}
-            printMsg("JARVIS", "🎙️ [WAKE-WORD] बंद केला.", "ai-msg");
-            speak("ट्रिगर बंद.");
-        }
-    }
-
-    function startVoiceRec() {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) return;
-        recognition = new SR();
-        recognition.lang = 'mr-IN';
-        recognition.continuous = true;
-        recognition.onresult = function(e) {
-            if (!isWakeActive) return;
-            const text = e.results[e.results.length - 1][0].transcript.trim().toLowerCase();
-            if (text.includes("jarvis") || text.includes("जार्व्हिस")) {
-                speak("होय बॉस, सांगा काय हुकूम आहे?");
-                printMsg("JARVIS", "⚡ [JARVIS DETECTED]: Listening...", "ai-msg");
-            } else if (text.length > 4) {
-                runCommand(text);
-            }
-        };
-        try { recognition.start(); } catch(e){}
-    }
-
-    // 2. LOCAL RAG
-    function runLocalRAG() {
-        printMsg("JARVIS", "🔍 [LOCAL RAG]: जुन्या नोट्समधून डेटा सर्च केला: 'Project Alpha & Security Vault keys verified.'", "ai-msg");
-        speak("लोकल नोट्स सापडल्या.");
-    }
-
-    // 3. RPA MACRO
-    function runRPAMacro() {
-        printMsg("JARVIS", "🤖 [RPA MACRO]: ब्राउझर ऑटोमेशन मॅक्रो रेकॉर्ड यशस्वीरित्या पूर्ण झाला!", "ai-msg");
-        speak("आरपीएम मॅक्रो तयार.");
-    }
-
-    // 4. MOOD AI
-    function triggerMood() {
-        printMsg("JARVIS", `🧬 [MOOD AI]: युजरचा टायपिंग रिदम ${userMood} आहे. जार्व्हिस टोन सेट केला!`, "ai-msg");
-        speak(`सध्याचा मूड ${userMood} आहे.`);
-    }
-
-    // 5. GESTURES & VISION
-    function toggleGestures() {
-        isGestActive = !isGestActive;
-        const vid = document.getElementById("webcam");
-        vid.style.display = isGestActive ? "block" : "none";
-        if (isGestActive) {
-            navigator.mediaDevices.getUserMedia({ video: true }).s(s => { vid.srcObject = s; }).catch(()=>{});
-            printMsg("JARVIS", "✋ [VISION/GESTURES]: कॅमेरा आणि व्हिजन सेन्सर ऑन.", "ai-msg");
-            speak("कॅमेरा व्हिजन सुरू.");
-        } else {
-            if(vid.srcObject) vid.srcObject.getTracks().forEach(t=>t.stop());
-            printMsg("JARVIS", "✋ [VISION]: बंद केला.", "ai-msg");
-            speak("व्हिजन बंद.");
-        }
-    }
-
-    // 6. SUB-AGENTS
-    function toggleSubAgents() {
-        isSubActive = !isSubActive;
-        printMsg("JARVIS", `🕵️ [SUB-AGENTS]: बॅकग्राउंड ट्रॅकिंग सिस्टीम ${isSubActive ? 'सुरू झाली' : 'थांबवली'}.`, "ai-msg");
-        speak(isSubActive ? "सब एजंट्स ऑन." : "सब एजंट्स ऑफ.");
-    }
-
-    // 7. SELF-HEALING
-    function runSelfHeal() {
-        printMsg("JARVIS", "💻 [SELF-HEALING ENGINE]: सँडबॉक्समधील कोड एरर स्कॅन करून स्वतः पॅच केली!", "ai-msg", "Fixed syntax & auto-patched.");
-        speak("कोड स्वतः दुरुस्त केला.");
-    }
-
-    // 8. NEURAL GRAPH
-    function openNeuralGraph() {
-        printMsg("JARVIS", "🧠 [NEURAL GRAPH]: मेमरी नोड्सचा 3D मेंदूचा नकाशा लोड झाला आहे!", "ai-msg");
-        speak("न्युराल् ग्राफ लोड झाला.");
-    }
-
-    // 9. AMBIENT AUDIO
-    function toggleAmbient() {
-        isAmbActive = !isAmbActive;
-        printMsg("JARVIS", `🎵 [AMBIENT AUDIO]: आजूबाजूचा परिसर ओळखला. लो-लोफाय थीम ${isAmbActive ? 'सुरू' : 'बंद'}.`, "ai-msg");
-        speak("ॲम्बियंट सेन्सर.");
-    }
-
-    // 10. LOCKDOWN
-    function triggerLockdown() {
-        const body = document.getElementById("appBody");
-        body.classList.toggle("red-alert");
-        const active = body.classList.contains("red-alert");
-        printMsg("JARVIS", active ? "🚨 [LOCKDOWN]: रेड अलर्ट सायरन प्रोटोकॉल ऑन!" : "🛡️ [LOCKDOWN]: नॉर्मल.", "ai-msg");
-        speak(active ? "रेड अलर्ट लॉकडाऊन सुरू." : "लॉकडाऊन हटवला.");
-    }
-
-    // 11. VAULT
-    function openVault() {
-        printMsg("JARVIS", "🔒 [SECRET VAULT]: खाजगी नोट्स आणि पासवर्ड्स इमेज पिक्सल्समध्ये एनक्रिप्ट केले आहेत!", "ai-msg");
-        speak("सिक्रेट व्हॉल्ट उघडले.");
-    }
-
-    // 12. TELEMETRY RADAR
-    function fetchTelemetry() {
-        const temp = (36 + Math.random() * 4).toFixed(1) + "°C";
-        document.getElementById("cpuTemp").innerText = temp;
-        printMsg("JARVIS", `📡 [RADAR]: CPU Temp: ${temp} | Network: 5G Secure Mesh Active`, "ai-msg");
-        speak(`सीपीयू तापमान ${temp}`);
-    }
-
-    async function queryAI(prompt) {
-        let systemPrompt = "You are OMNI-JARVIS v12.1. Fluent in Marathi, Hindi, English. Give direct and expert answers.";
-        if (activeGem === 'coder') systemPrompt = "You are Coder Gem expert.";
-        if (activeGem === 'research') systemPrompt = "You are Research Gem expert.";
-        
-        try {
-            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + GROQ_KEY },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "system", content: systemPrompt }, { role: "user", content: prompt }],
-                    temperature: 0.7, max_tokens: 400
-                })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                const out = data?.choices?.[0]?.message?.content;
-                if (out) return out.trim();
-            }
-        } catch(e) {}
-        return `बॉस, '${prompt}' वर जार्व्हिस कार्य करत आहे!`;
-    }
-
-    async function runCommand(text) {
-        if (!text) return;
-        printMsg("BOSS", text, "user-msg");
-        const reply = await queryAI(text);
-        printMsg("JARVIS", reply, "ai-msg");
-        speak(reply);
-    }
-
-    function onSendClick() {
-        const input = document.getElementById("userPrompt");
-        const val = input.value.trim();
-        if (!val) return;
-        input.value = "";
-        runCommand(val);
-    }
-</script>
-
-</body>
-</html>
+/* =========================================================================
+   JARVIS — Single File F
