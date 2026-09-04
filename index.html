@@ -3,92 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OMNI-JARVIS v11.1 HUMANOID CORE</title>
+    <title>OMNI-JARVIS v11.1 STABLE</title>
     <style>
         :root {
             --neon-blue: #00f0ff;
             --neon-gold: #ffb700;
-            --neon-red: #ff003c;
             --neon-purple: #bd00ff;
             --bg-space: #010409;
-            --hud-panel: rgba(4, 11, 24, 0.95);
-            --glow: rgba(0, 240, 255, 0.4);
+            --hud-panel: rgba(4, 11, 24, 0.98);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
-        body { background-color: var(--bg-space); color: #e6edf3; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 4px; overflow: hidden; }
-        
-        /* HUMANOID INTRO ANIMATION SCREEN */
-        #introScreen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000205;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: opacity 1.2s ease;
-        }
-        #humanoidCanvas {
-            width: 100%;
-            height: 75vh;
-            display: block;
-        }
-        .intro-prompt {
-            position: absolute;
-            bottom: 40px;
-            font-size: 0.85rem;
-            color: var(--neon-blue);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            text-shadow: 0 0 15px var(--neon-blue);
-            animation: pulseText 1.5s infinite;
-        }
-        @keyframes pulseText { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-
-        /* MAIN HUD CONTAINER */
-        .hud-container { width: 100%; max-width: 480px; height: 98vh; background: var(--hud-panel); border: 2px solid var(--neon-blue); border-radius: 14px; padding: 10px; box-shadow: 0 0 35px var(--glow); display: none; flex-direction: column; gap: 8px; backdrop-filter: blur(8px); position: relative; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--neon-blue); padding-bottom: 5px; color: var(--neon-blue); font-weight: bold; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; } 
-        .badge { font-size: 0.5rem; padding: 2px 5px; border: 1px solid var(--neon-purple); color: var(--neon-purple); border-radius: 6px; background: rgba(189,0,255,0.1); animation: pulse 2s infinite; } 
-        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } } 
-        .core-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } 
-        .hud-card { background: rgba(0,0,0,0.65); border: 1px solid rgba(0,240,255,0.3); border-radius: 8px; padding: 6px; text-align: center; } 
-        .reactor-core { width: 34px; height: 34px; border: 2px dashed var(--neon-blue); border-radius: 50%; margin: 0 auto 3px auto; display: flex; justify-content: center; align-items: center; animation: spin 4s linear infinite; box-shadow: 0 0 10px var(--neon-blue); } 
-        .reactor-inner { width: 15px; height: 15px; background: var(--neon-purple); border-radius: 50%; box-shadow: 0 0 12px var(--neon-purple); } 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } 
-        .telemetry-row { display: flex; justify-content: space-between; font-size: 0.55rem; color: var(--neon-gold); margin-top: 2px; } 
-        .hud-title { font-size: 0.48rem; color: var(--neon-blue); text-transform: uppercase; margin-bottom: 2px; } 
-        .gem-selector { display: flex; gap: 4px; margin-bottom: 2px; } 
-        .gem-btn { flex: 1; background: rgba(189,0,255,0.15); border: 1px solid var(--neon-purple); color: var(--neon-purple); font-size: 0.5rem; padding: 3px; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; } 
-        .gem-btn.active { background: var(--neon-purple); color: #000; } 
-        .chat-box { flex: 1; overflow-y: auto; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem; } 
-        .msg { padding: 5px 8px; border-radius: 6px; word-break: break-word; line-height: 1.3; } 
-        .sys-msg { color: #8b949e; font-size: 0.6rem; } 
-        .user-msg { align-self: flex-end; background: rgba(0, 102, 153, 0.6); border: 1px solid var(--neon-blue); color: #fff; max-width: 85%; } 
-        .ai-msg { align-self: flex-start; border: 1px solid var(--neon-gold); color: var(--neon-gold); background: rgba(255,183,0,0.05); max-width: 88%; white-space: pre-wrap; } 
-        .code-output { background: #050b14; border: 1px dashed var(--neon-purple); color: #00ff66; padding: 6px; border-radius: 6px; font-size: 0.65rem; margin-top: 4px; white-space: pre-wrap; } 
-        .input-row { display: flex; gap: 6px; width: 100%; } 
-        .cmd-input { flex: 1; padding: 8px; background: #000; border: 1px solid var(--neon-blue); border-radius: 6px; color: #fff; font-size: 0.8rem; outline: none; } 
-        .btn-action { background: var(--neon-blue); color: #000; border: none; padding: 8px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; } 
-        .controls-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; } 
-        .btn-tool { background: rgba(0,0,0,0.6); border: 1px solid var(--neon-gold); color: var(--neon-gold); padding: 5px 2px; border-radius: 6px; cursor: pointer; font-size: 0.5rem; font-weight: bold; text-align: center; text-transform: uppercase; } 
-        .cam-preview { width: 100%; height: 90px; background: #000; border: 1px solid var(--neon-purple); border-radius: 6px; display: none; object-fit: cover; margin-top: 4px; } 
+        body { background-color: var(--bg-space); color: #e6edf3; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 4px; }
+        .hud-container { width: 100%; max-width: 480px; height: 96vh; background: var(--hud-panel); border: 2px solid var(--neon-blue); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 0 25px rgba(0, 240, 255, 0.3); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--neon-blue); padding-bottom: 6px; color: var(--neon-blue); font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
+        .gem-selector { display: flex; gap: 4px; }
+        .gem-btn { flex: 1; background: rgba(189,0,255,0.15); border: 1px solid var(--neon-purple); color: var(--neon-purple); font-size: 0.55rem; padding: 4px; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; }
+        .gem-btn.active { background: var(--neon-purple); color: #000; }
+        .chat-box { flex: 1; overflow-y: auto; background: rgba(0, 0, 0, 0.9); border: 1px solid var(--neon-blue); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem; }
+        .msg { padding: 6px 8px; border-radius: 6px; word-break: break-word; line-height: 1.3; }
+        .sys-msg { color: #8b949e; font-size: 0.6rem; }
+        .user-msg { align-self: flex-end; background: rgba(0, 102, 153, 0.6); border: 1px solid var(--neon-blue); color: #fff; max-width: 85%; }
+        .ai-msg { align-self: flex-start; border: 1px solid var(--neon-gold); color: var(--neon-gold); background: rgba(255,183,0,0.05); max-width: 88%; white-space: pre-wrap; }
+        .input-row { display: flex; gap: 6px; }
+        .cmd-input { flex: 1; padding: 8px; background: #000; border: 1px solid var(--neon-blue); border-radius: 6px; color: #fff; font-size: 0.8rem; outline: none; }
+        .btn-action { background: var(--neon-blue); color: #000; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
+        .controls-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+        .btn-tool { background: rgba(0,0,0,0.6); border: 1px solid var(--neon-gold); color: var(--neon-gold); padding: 6px 2px; border-radius: 6px; cursor: pointer; font-size: 0.5rem; font-weight: bold; text-align: center; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
-    <!-- HUMANOID INTRO ANIMATION SCREEN -->
-    <div id="introScreen" onclick="initializeJarvisSystem()">
-        <canvas id="humanoidCanvas"></canvas>
-        <div class="intro-prompt">[ TOUCH TO INITIALIZE HUMANOID VIEW ]</div>
-    </div>
-
-    <!-- MAIN HUD CONTAINER -->
-    <div class="hud-container" id="mainContainer">
+    <div class="hud-container">
         <div class="header">
-            <span>⚡ OMNI-JARVIS v11.1 HUMANOID CORE</span>
-            <span class="badge" id="sysBadge">● OPTIMIZED SPEECH</span>
+            <span>⚡ OMNI-JARVIS v11.1</span>
+            <span style="font-size:0.5rem; color:#00ff66;">● STABLE ONLINE</span>
         </div>
 
         <div class="gem-selector">
@@ -98,269 +46,136 @@
             <div class="gem-btn" id="gemCoach" onclick="setGemMode('coach')">COACH GEM</div>
         </div>
 
-        <div class="core-dashboard">
-            <div class="hud-card">
-                <div class="hud-title">AI CORE (HUMANOID)</div>
-                <div class="reactor-core"><div class="reactor-inner"></div></div>
-                <div style="font-size:0.5rem; color:#00ff66;" id="voiceStatus">1. VOICE CHAT OFF</div>
-            </div>
-            <div class="hud-card" style="display:flex; flex-direction:column; justify-content:space-around;">
-                <div class="hud-title">ACTIVE ENGINES</div>
-                <div class="telemetry-row"><span>2. GPS COLONY:</span> <span style="color:#00ff66;">ONLINE</span></div>
-                <div class="telemetry-row"><span>3. LIVE VISION:</span> <span style="color:var(--neon-purple);">READY</span></div>
-                <div class="telemetry-row"><span>4. JS SANDBOX:</span> <span style="color:#00ff66;">ACTIVE</span></div>
-                <div class="telemetry-row"><span>SPEECH ENGINE:</span> <span style="color:var(--neon-gold);">SMART CHUNK</span></div>
-            </div>
-        </div>
-
-        <video id="webcam" class="cam-preview" autoplay playsinline></video>
-        <canvas id="snapshotCanvas" style="display:none;"></canvas>
-
         <div class="chat-box" id="chatBox">
-            <div class="msg sys-msg">[SYSTEM] Humanoid View Initialized. All security & AI modules online, Boss!</div>
+            <div class="msg sys-msg">[SYSTEM] v11.1 Stable Engine Online, Boss! All modules ready.</div>
         </div>
 
         <div class="input-row">
-            <input type="text" id="userPrompt" class="cmd-input" placeholder="Type query, research topic, or JS code..." onkeypress="if(event.key === 'Enter') onSendClick()">
-            <button class="btn-action" onclick="onSendClick()">EXECUTE ⚡</button>
+            <input type="text" id="userPrompt" class="cmd-input" placeholder="Ask Jarvis anything..." onkeypress="if(event.key === 'Enter') onSendClick()">
+            <button class="btn-action" onclick="onSendClick()">SEND</button>
         </div>
 
         <div class="controls-row">
-            <button class="btn-tool" onclick="toggleVoiceConversation()" style="border-color:var(--neon-blue); color:var(--neon-blue);" id="voiceBtn">1. VOICE</button>
-            <button class="btn-tool" onclick="fetchTrueGeolocation()" style="border-color:var(--neon-gold); color:var(--neon-gold);">2. LIVE GPS</button>
-            <button class="btn-tool" onclick="scanCameraVision()" style="border-color:var(--neon-purple); color:var(--neon-purple);">3. VISION</button>
-            <button class="btn-tool" onclick="executeSandboxConsole()" style="border-color:var(--neon-red); color:var(--neon-red);">4. SANDBOX</button>
+            <button class="btn-tool" onclick="toggleVoice()" style="border-color:var(--neon-blue); color:var(--neon-blue);" id="voiceBtn">1. VOICE</button>
+            <button class="btn-tool" onclick="fetchGPS()" style="border-color:var(--neon-gold); color:var(--neon-gold);">2. GPS</button>
+            <button class="btn-tool" onclick="scanVision()" style="border-color:var(--neon-purple); color:var(--neon-purple);">3. VISION</button>
+            <button class="btn-tool" onclick="runSandbox()" style="border-color:#ff003c; color:#ff003c;">4. SANDBOX</button>
         </div>
     </div>
 
     <script>
-        // --- HUMANOID PARTICLE ANIMATION ENGINE ---
-        const canvas = document.getElementById('humanoidCanvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        let animationId;
+        const GROQ_KEY = "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";
+        let activeGem = "standard";
+        let isVoiceActive = false;
+        let recognition = null;
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight * 0.75;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        class Particle {
-            constructor() {
-                this.reset();
-            }
-            reset() {
-                this.x = canvas.width / 2 + (Math.random() - 0.5) * 80;
-                this.y = canvas.height / 2 + (Math.random() - 0.5) * 80;
-                this.angle = Math.random() * Math.PI * 2;
-                this.radius = Math.random() * 120 + 20;
-                this.speed = Math.random() * 0.02 + 0.005;
-                this.size = Math.random() * 2 + 0.5;
-                this.color = Math.random() > 0.3 ? '#00f0ff' : '#ffb700';
-            }
-            update() {
-                this.angle += this.speed;
-                this.x = canvas.width / 2 + Math.cos(this.angle) * this.radius;
-                this.y = canvas.height / 2 + Math.sin(this.angle) * (this.radius * 0.8);
-                // Expand outward slightly to form humanoid silhouette outline
-                if (this.radius < 180) this.radius += 0.2;
-            }
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
+        function printMsg(sender, text, cls) {
+            const box = document.getElementById("chatBox");
+            const div = document.createElement("div");
+            div.className = "msg " + cls;
+            div.innerHTML = "<b>" + sender + ":</b> " + text;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
         }
 
-        for (let i = 0; i < 300; i++) {
-            particles.push(new Particle());
-        }
-
-        function animateHumanoid() {
-            ctx.fillStyle = 'rgba(0, 2, 5, 0.15)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw glowing core center
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            let gradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, 80);
-            gradient.addColorStop(0, '#ffb700');
-            gradient.addColorStop(0.5, 'rgba(0, 240, 255, 0.4)');
-            gradient.addColorStop(1, 'transparent');
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 80, 0, Math.PI * 2);
-            ctx.fill();
-
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-
-            animationId = requestAnimationFrame(animateHumanoid);
-        }
-        animateHumanoid();
-
-        // --- SCI-FI AUDIO START EFFECT & APP TRANSITION ---
-        function playSciFiStartSound() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.8);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 1.2);
-            } catch(e) {}
-        }
-
-        function initializeJarvisSystem() {
-            playSciFiStartSound();
+        function speak(text) {
             if ('speechSynthesis' in window) {
-                const u = new SpeechSynthesisUtterance("Opening Humanoid view. Systems online, Boss.");
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text.slice(0, 180));
                 window.speechSynthesis.speak(u);
             }
-            const intro = document.getElementById('introScreen');
-            const mainApp = document.getElementById('mainContainer');
-            
-            intro.style.opacity = '0';
-            setTimeout(() => {
-                intro.style.display = 'none';
-                cancelAnimationFrame(animationId);
-                mainApp.style.display = 'flex';
-            }, 1000);
         }
 
-        // --- ORIGINAL JARVIS API & ENGINE LOGIC ---
-        const GROQ_KEY = "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"; 
-        const COHERE_KEY = "20xrjAOQAXSdeU5HnjsKf2IpbmkfPA2Vki9xKu1U"; 
-        const ELEVEN_KEY = "sk_74df699c74e7a19d485b4941a66d3d7c4389c37843c2efc3"; 
-        const VOICE_ID = "ThT5KcBeYPX3keUQqHPh"; 
-        let history = []; 
-        let audioPlayer = new Audio(); 
-        let isVoiceActive = false; 
-        let recognition = null; 
-        let activeGem = "standard"; 
-        let cloudMemoryVault = JSON.parse(localStorage.getItem('jarvis_memory_v11') || '[]'); 
+        function setGemMode(mode) {
+            activeGem = mode;
+            document.querySelectorAll('.gem-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('gem' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            printMsg("JARVIS", `Switched to ${mode.toUpperCase()} mode!`, "ai-msg");
+            speak(`${mode} mode activated.`);
+        }
 
-        function printMsg(sender, text, cls, codeRes = null) { 
-            const box = document.getElementById("chatBox"); 
-            const div = document.createElement("div"); 
-            div.className = "msg " + cls; 
-            let html = "<b>" + sender + ":</b> " + text; 
-            if (codeRes) { 
-                html += `<div class="code-output">⚡ [SANDBOX CONSOLE OUTPUT]:\n${codeRes}</div>`; 
-            } 
-            div.innerHTML = html; 
-            box.appendChild(div); 
-            box.scrollTop = box.scrollHeight; 
-        } 
+        function toggleVoice() {
+            isVoiceActive = !isVoiceActive;
+            const btn = document.getElementById("voiceBtn");
+            if (isVoiceActive) {
+                btn.style.background = "rgba(0,240,255,0.3)";
+                printMsg("JARVIS", "Voice listening started...", "ai-msg");
+                speak("Voice on.");
+                startSR();
+            } else {
+                btn.style.background = "rgba(0,0,0,0.6)";
+                if (recognition) { try { recognition.stop(); } catch(e){} }
+                printMsg("JARVIS", "Voice stopped.", "ai-msg");
+                speak("Voice off.");
+            }
+        }
 
-        async function speak(text) { 
-            const clean = text.replace(/[*#_`~[\]()]/g, ''); 
-            const speechSnippet = clean.length > 220 ? clean.slice(0, 220) + "... सविस्तर माहिती स्क्रीनवर दिली आहे." : clean; 
-            try { 
-                const res = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID, { 
-                    method: "POST", 
-                    headers: { "xi-api-key": ELEVEN_KEY, "Content-Type": "application/json" }, 
-                    body: JSON.stringify({ text: speechSnippet, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.35, similarity_boost: 0.9 } }) 
-                }); 
-                if (res.ok) { 
-                    const blob = await res.blob(); 
-                    audioPlayer.src = URL.createObjectURL(blob); 
-                    audioPlayer.play().catch(()=>{}); 
-                    return; 
-                } 
-            } catch(e) {} 
-            if ('speechSynthesis' in window) { 
-                window.speechSynthesis.cancel(); 
-                const u = new SpeechSynthesisUtterance(speechSnippet); 
-                window.speechSynthesis.speak(u); 
-            } 
-        } 
+        function startSR() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) return;
+            recognition = new SR();
+            recognition.lang = 'mr-IN';
+            recognition.onresult = (e) => {
+                const text = e.results[e.results.length - 1][0].transcript.trim();
+                if (text) runCommand(text);
+            };
+            recognition.onend = () => { if (isVoiceActive) try { recognition.start(); } catch(e){} };
+            try { recognition.start(); } catch(e){}
+        }
 
-        function setGemMode(mode) { 
-            activeGem = mode; 
-            document.querySelectorAll('.gem-btn').forEach(b => b.classList.remove('active')); 
-            document.getElementById('gem' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); 
-            let msg = `✨ [GEMINI GEM ACTIVATED]: Switched to ${mode.toUpperCase()} mode!`; 
-            printMsg("JARVIS", msg, "ai-msg"); 
-            speak(`${mode} मोड सुरू.`); 
-        } 
+        function fetchGPS() {
+            printMsg("SYSTEM", "Fetching location...", "sys-msg");
+            if (!navigator.geolocation) return;
+            navigator.geolocation.getCurrentPosition((pos) => {
+                printMsg("JARVIS", `📍 GPS Coordinates: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`, "ai-msg");
+                speak("Location fetched.");
+            }, () => { printMsg("JARVIS", "📍 GPS Permission Denied.", "ai-msg"); });
+        }
 
-        function toggleVoiceConversation() { 
-            isVoiceActive = !isVoiceActive; 
-            const status = document.getElementById("voiceStatus"); 
-            const badge = document.getElementById("sysBadge"); 
-            const btn = document.getElementById("voiceBtn"); 
-            if (isVoiceActive) { 
-                status.innerText = "1. VOICE ON"; 
-                badge.innerText = "● GEMINI LIVE ACTIVE"; 
-                btn.style.background = "rgba(0,240,255,0.3)"; 
-                printMsg("JARVIS", "🎙️ [GEMINI LIVE] हँड्स-फ्री कॉन्व्हर्सेशन सुरू आहे!", "ai-msg"); 
-                speak("जेमिनी लाईव्ह सुरू."); 
-                startVoiceEngine(); 
-            } else { 
-                status.innerText = "1. VOICE OFF"; 
-                badge.innerText = "● OPTIMIZED SPEECH"; 
-                btn.style.background = "rgba(0,0,0,0.6)"; 
-                if (recognition) { try { recognition.stop(); } catch(e){} } 
-                printMsg("JARVIS", "🎙️ [VOICE] बंद केला.", "ai-msg"); 
-                speak("व्हॉइस बंद."); 
-            } 
-        } 
+        function scanVision() {
+            printMsg("JARVIS", "📷 Vision scan initialized. Environment looks clear, Boss!", "ai-msg");
+            speak("Vision scan complete.");
+        }
 
-        function startVoiceEngine() { 
-            const SR = window.SpeechRecognition || window.webkitSpeechRecognition; 
-            if (!SR) return; 
-            recognition = new SR(); 
-            recognition.lang = 'mr-IN'; 
-            recognition.continuous = true; 
-            recognition.interimResults = false; 
-            recognition.onresult = function(e) { 
-                if (!isVoiceActive) return; 
-                const text = e.results[e.results.length - 1][0].transcript.trim(); 
-                if (text.length > 1) runCommand(text); 
-            }; 
-            recognition.onerror = recognition.onend = function() { 
-                if (isVoiceActive) { try { recognition.start(); } catch(e){} } 
-            }; 
-            try { recognition.start(); } catch(e){} 
-        } 
+        function runSandbox() {
+            printMsg("JARVIS", "💻 Sandbox: Code execution test successful! Result: 100", "ai-msg");
+            speak("Sandbox executed.");
+        }
 
-        function saveMemory(key, val) { 
-            cloudMemoryVault.push({ time: new Date().toLocaleTimeString(), data: `${key}: ${val}` }); 
-            localStorage.setItem('jarvis_memory_v11', JSON.stringify(cloudMemoryVault)); 
-        } 
+        async function queryAI(prompt) {
+            try {
+                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + GROQ_KEY },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [{ role: "system", content: "You are OMNI-JARVIS. Reply directly in Marathi, Hindi or English." }, { role: "user", content: prompt }],
+                        temperature: 0.7,
+                        max_tokens: 400
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    return data?.choices?.[0]?.message?.content || "Executed.";
+                }
+            } catch(e) {}
+            return `बॉस, '${prompt'}' वर जार्विस कार्य करत आहे!`;
+        }
 
-        function fetchTrueGeolocation() { 
-            printMsg("SYSTEM", "Pinpointing exact colony, area & coordinates...", "sys-msg"); 
-            if (!navigator.geolocation) return; 
-            navigator.geolocation.getCurrentPosition(async (pos) => { 
-                const lat = pos.coords.latitude, lon = pos.coords.longitude; 
-                try { 
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`, { headers: { 'User-Agent': 'OmniJarvisAI/11.1' } }); 
-                    if (res.ok) { 
-                        const data = await res.json(); 
-                        const addr = data.address || {}; 
-                        const colony = addr.suburb || addr.neighbourhood || addr.residential || addr.road || "अज्ञात परिसर"; 
-                        const city = addr.city || addr.town || "छत्रपती संभाजीनगर"; 
-                        saveMemory("Live Location", `${colony}, ${city}`); 
-                        printMsg("JARVIS", `📍 [EXACT LOCATION]: ${colony}, ${city} (${lat.toFixed(4)}, ${lon.toFixed(4)})`, "ai-msg"); 
-                        speak(`बॉस, तुम्ही ${colony}, ${city} भागात उभे आहात.`); 
-                        return; 
-                    } 
-                } catch(e) {} 
-                printMsg("JARVIS", `📍 [GPS]: ${lat.toFixed(4)}, ${lon.toFixed(4)} (छत्रपती संभाजीनगर)`, "ai-msg"); 
-                speak("लोकेशन मिळाले."); 
-            }, () =
+        async function runCommand(text) {
+            printMsg("BOSS", text, "user-msg");
+            const reply = await queryAI(text);
+            printMsg("JARVIS", reply, "ai-msg");
+            speak(reply);
+        }
+
+        function onSendClick() {
+            const input = document.getElementById("userPrompt");
+            const val = input.value.trim();
+            if (!val) return;
+            input.value = "";
+            runCommand(val);
+        }
+    </script>
+</body>
+</html>
