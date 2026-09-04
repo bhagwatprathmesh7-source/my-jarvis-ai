@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OMNI-JARVIS v12.2 GOD MODE</title>
+    <title>OMNI-JARVIS v12.3 GOD MODE</title>
     <style>
         :root {
             --neon-blue: #00f0ff;
@@ -70,7 +70,7 @@
 
 <div class="hud-container">
     <div class="header">
-        <span>⚡ OMNI-JARVIS v12.2</span>
+        <span>⚡ OMNI-JARVIS v12.3</span>
         <span class="badge" id="sysBadge">● ONLINE</span>
     </div>
 
@@ -144,7 +144,7 @@
     <video id="webcam" class="cam-preview" autoplay playsinline></video>
 
     <div class="chat-box" id="chatBox">
-        <div class="msg sys-msg">[SYSTEM] v12.2 God Mode Online. All systems fully synchronized, Boss!</div>
+        <div class="msg sys-msg">[SYSTEM] v12.3 God Mode Online. All systems fully synchronized, Boss!</div>
     </div>
 
     <div class="input-row">
@@ -166,13 +166,27 @@
     const ELEVEN_KEY = "sk_74df699c74e7a19d485b4941a66d3d7c4389c37843c2efc3";
     const VOICE_ID = "ThT5KcBeYPX3keUQqHPh";
     
-    let history = JSON.parse(localStorage.getItem('jarvis_chat_history_v12') || '[]');
+    let history = [];
+    try {
+        let saved = localStorage.getItem('jarvis_chat_history_v12');
+        if(saved) history = JSON.parse(saved);
+    } catch(e) { history = []; }
+
     let audioPlayer = new Audio();
     let isVoiceActive = false;
     let recognition = null;
     let activeGem = "standard";
-    let cloudMemoryVault = JSON.parse(localStorage.getItem('jarvis_memory_v12') || '[]');
-    let todoItems = JSON.parse(localStorage.getItem('jarvis_todos_v12') || '[]');
+    let cloudMemoryVault = [];
+    try {
+        let savedMem = localStorage.getItem('jarvis_memory_v12');
+        if(savedMem) cloudMemoryVault = JSON.parse(savedMem);
+    } catch(e) { cloudMemoryVault = []; }
+
+    let todoItems = [];
+    try {
+        let savedTodos = localStorage.getItem('jarvis_todos_v12');
+        if(savedTodos) todoItems = JSON.parse(savedTodos);
+    } catch(e) { todoItems = []; }
 
     // Background Canvas Particles
     const bgCanvas = document.getElementById('bgCanvas');
@@ -182,12 +196,12 @@
     resizeCanvas();
 
     let particles = [];
-    for(let i=0; i<40; i++) {
+    for(let i=0; i<30; i++) {
         particles.push({
             x: Math.random() * bgCanvas.width,
             y: Math.random() * bgCanvas.height,
-            vx: (Math.random() - 0.5) * 0.4,
-            vy: (Math.random() - 0.5) * 0.4,
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: (Math.random() - 0.5) * 0.3,
             size: Math.random() * 2 + 1
         });
     }
@@ -204,7 +218,6 @@
     }
     drawParticles();
 
-    // Initialize UI on load
     window.onload = function() {
         renderChatHistory();
         renderTodos();
@@ -251,12 +264,14 @@
     }
 
     function saveChatHistory() {
-        localStorage.setItem('jarvis_chat_history_v12', JSON.stringify(history.slice(-20)));
+        try {
+            localStorage.setItem('jarvis_chat_history_v12', JSON.stringify(history.slice(-20)));
+        } catch(e) {}
     }
 
     async function speak(text) {
         const clean = text.replace(/[*#_`~[\]()]/g, '');
-        const speechSnippet = clean.length > 200 ? clean.slice(0, 200) + "..." : clean;
+        const speechSnippet = clean.length > 180 ? clean.slice(0, 180) + "..." : clean;
         try {
             const res = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID, {
                 method: "POST",
@@ -341,20 +356,14 @@
         saveTodos();
         renderTodos();
     }
-    function saveTodos() { localStorage.setItem('jarvis_todos_v12', JSON.stringify(todoItems)); }
+    function saveTodos() { 
+        try { localStorage.setItem('jarvis_todos_v12', JSON.stringify(todoItems)); } catch(e){} 
+    }
     function renderTodos() {
         const list = document.getElementById('todoList');
+        if(!list) return;
         list.innerHTML = '';
         todoItems.forEach((item, idx) => {
             list.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.5); padding:3px 6px; border-radius:4px; border:1px solid rgba(0,240,255,0.2);">
                 <span onclick="toggleTodo(${idx})" style="cursor:pointer; text-decoration:${item.done ? 'line-through' : 'none'}; color:${item.done ? '#8b949e' : '#fff'};">${item.text}</span>
-                <button onclick="deleteTodo(${idx})" style="background:none; border:none; color:var(--neon-red); cursor:pointer; font-weight:bold;">✕</button>
-            </div>`;
-        });
-    }
-
-    function saveNotes() { localStorage.setItem('jarvis_notes_v12', document.getElementById('notesArea').value); }
-    function loadNotes() { document.getElementById('notesArea').value = localStorage.getItem('jarvis_notes_v12') || ''; }
-
-    function runCalc() {
-        const val = document.getElementById('calcInput'
+                <button onclick="deleteTodo(${idx})" style="background:none; border:none; color:var(--neon-red); curs
