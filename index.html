@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OMNI-JARVIS v12.3 GOD MODE</title>
+    <title>OMNI-JARVIS v12.4 GOD MODE</title>
     <style>
         :root {
             --neon-blue: #00f0ff;
@@ -70,7 +70,7 @@
 
 <div class="hud-container">
     <div class="header">
-        <span>⚡ OMNI-JARVIS v12.3</span>
+        <span>⚡ OMNI-JARVIS v12.4</span>
         <span class="badge" id="sysBadge">● ONLINE</span>
     </div>
 
@@ -144,12 +144,12 @@
     <video id="webcam" class="cam-preview" autoplay playsinline></video>
 
     <div class="chat-box" id="chatBox">
-        <div class="msg sys-msg">[SYSTEM] v12.3 God Mode Online. All systems fully synchronized, Boss!</div>
+        <div class="msg sys-msg">[SYSTEM] v12.4 God Mode Online. All systems fully synchronized, Boss!</div>
     </div>
 
     <div class="input-row">
         <input type="text" id="userPrompt" class="cmd-input" placeholder="Type query, code or command..." onkeypress="if(event.key === 'Enter') onSendClick()">
-        <button class="btn-action" onclick="onSendClick()">EXECUTE ⚡</button>
+        <button class="btn-action" id="sendBtn" onclick="onSendClick()" ontouchend="onSendClick()">EXECUTE ⚡</button>
     </div>
 
     <div class="controls-row">
@@ -240,6 +240,7 @@
 
     function printMsg(sender, text, cls, codeRes = null) {
         const box = document.getElementById("chatBox");
+        if(!box) return;
         const div = document.createElement("div");
         div.className = "msg " + cls;
         let timeStr = new Date().toLocaleTimeString();
@@ -253,6 +254,7 @@
 
     function renderChatHistory() {
         const box = document.getElementById("chatBox");
+        if(!box) return;
         history.forEach(item => {
             let cls = item.role === 'user' ? 'user-msg' : 'ai-msg';
             const div = document.createElement("div");
@@ -366,4 +368,4 @@
         todoItems.forEach((item, idx) => {
             list.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.5); padding:3px 6px; border-radius:4px; border:1px solid rgba(0,240,255,0.2);">
                 <span onclick="toggleTodo(${idx})" style="cursor:pointer; text-decoration:${item.done ? 'line-through' : 'none'}; color:${item.done ? '#8b949e' : '#fff'};">${item.text}</span>
-                <button onclick="deleteTodo(${idx})" style="background:none; border:none; color:var(--neon-red); curs
+                <button onc
