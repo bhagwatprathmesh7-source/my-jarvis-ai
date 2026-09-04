@@ -3,118 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OMNI-JARVIS v11.1 STABLE</title>
+    <title>OMNI-JARVIS v12.0 GOD MODE</title>
     <style>
         :root {
             --neon-blue: #00f0ff;
             --neon-gold: #ffb700;
+            --neon-red: #ff003c;
             --neon-purple: #bd00ff;
+            --neon-green: #00ff66;
             --bg-space: #010409;
-            --hud-panel: rgba(4, 11, 24, 0.98);
+            --hud-panel: rgba(4, 11, 24, 0.96);
+            --glow: rgba(0, 240, 255, 0.4);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
-        body { background-color: var(--bg-space); color: #e6edf3; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 4px; }
-        .hud-container { width: 100%; max-width: 480px; height: 96vh; background: var(--hud-panel); border: 2px solid var(--neon-blue); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 0 25px rgba(0, 240, 255, 0.3); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--neon-blue); padding-bottom: 6px; color: var(--neon-blue); font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
-        .chat-box { flex: 1; overflow-y: auto; background: rgba(0, 0, 0, 0.9); border: 1px solid var(--neon-blue); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem; }
-        .msg { padding: 6px 8px; border-radius: 6px; word-break: break-word; line-height: 1.3; }
-        .sys-msg { color: #8b949e; font-size: 0.6rem; }
+        body { background-color: var(--bg-space); color: #e6edf3; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 4px; overflow: hidden; position: relative; }
+        
+        /* Particle Background Canvas */
+        #bgCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+
+        /* Boot-up Sequence Screen */
+        #bootScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.8s ease; }
+        .boot-reactor { width: 80px; height: 80px; border: 3px dashed var(--neon-blue); border-radius: 50%; display: flex; justify-content: center; align-items: center; animation: spin 2s linear infinite, glowPulse 1.5s infinite alternate; margin-bottom: 20px; }
+        .boot-inner { width: 35px; height: 35px; background: var(--neon-blue); border-radius: 50%; box-shadow: 0 0 25px var(--neon-blue); }
+        .boot-logs { width: 100%; max-width: 400px; height: 120px; font-size: 0.65rem; color: var(--neon-green); overflow: hidden; border: 1px solid rgba(0,240,255,0.3); padding: 8px; border-radius: 6px; background: rgba(0,0,0,0.8); }
+
+        .hud-container { width: 100%; max-width: 520px; background: var(--hud-panel); border: 2px solid var(--neon-blue); border-radius: 14px; padding: 8px; box-shadow: 0 0 35px var(--glow); display: flex; flex-direction: column; gap: 6px; backdrop-filter: blur(10px); position: relative; max-height: 98vh; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--neon-blue); padding-bottom: 4px; color: var(--neon-blue); font-weight: bold; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+        .badge { font-size: 0.48rem; padding: 2px 5px; border: 1px solid var(--neon-purple); color: var(--neon-purple); border-radius: 6px; background: rgba(189,0,255,0.1); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        @keyframes glowPulse { 0% { box-shadow: 0 0 10px var(--neon-blue); } 100% { box-shadow: 0 0 30px var(--neon-blue); } }
+        
+        .ticker-wrap { width: 100%; overflow: white-space; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,240,255,0.2); border-radius: 4px; padding: 2px; font-size: 0.55rem; color: var(--neon-gold); }
+        .ticker { display: inline-block; white-space: nowrap; animation: ticker 20s linear infinite; }
+        @keyframes ticker { 0% { transform: translate3d(100%, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+
+        .core-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        .hud-card { background: rgba(0,0,0,0.65); border: 1px solid rgba(0,240,255,0.3); border-radius: 8px; padding: 5px; text-align: center; }
+        
+        .reactor-core { width: 30px; height: 30px; border: 2px dashed var(--neon-blue); border-radius: 50%; margin: 0 auto 2px auto; display: flex; justify-content: center; align-items: center; animation: spin 4s linear infinite; box-shadow: 0 0 10px var(--neon-blue); transition: all 0.3s; }
+        .reactor-inner { width: 12px; height: 12px; background: var(--neon-purple); border-radius: 50%; box-shadow: 0 0 10px var(--neon-purple); transition: all 0.3s; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .telemetry-row { display: flex; justify-content: space-between; font-size: 0.5rem; color: var(--neon-gold); margin-top: 2px; }
+        .hud-title { font-size: 0.45rem; color: var(--neon-blue); text-transform: uppercase; margin-bottom: 2px; }
+        
+        .gem-selector { display: flex; gap: 3px; }
+        .gem-btn { flex: 1; background: rgba(189,0,255,0.15); border: 1px solid var(--neon-purple); color: var(--neon-purple); font-size: 0.48rem; padding: 2px; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; }
+        .gem-btn.active { background: var(--neon-purple); color: #000; }
+
+        .tools-nav { display: flex; gap: 3px; overflow-x: auto; padding-bottom: 2px; }
+        .tool-tab { background: rgba(0,0,0,0.7); border: 1px solid var(--neon-gold); color: var(--neon-gold); font-size: 0.45rem; padding: 3px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; font-weight: bold; }
+        .tool-tab.active { background: var(--neon-gold); color: #000; }
+
+        .panel-view { display: none; background: rgba(0,0,0,0.85); border: 1px solid var(--neon-blue); border-radius: 8px; padding: 6px; font-size: 0.65rem; max-height: 120px; overflow-y: auto; }
+        .panel-view.active { display: block; }
+
+        .chat-box { height: 120px; overflow-y: auto; background: rgba(0, 0, 0, 0.85); border: 1px solid var(--neon-blue); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 5px; font-size: 0.7rem; }
+        .msg { padding: 4px 7px; border-radius: 6px; word-break: break-word; line-height: 1.3; position: relative; }
+        .sys-msg { color: #8b949e; font-size: 0.55rem; }
         .user-msg { align-self: flex-end; background: rgba(0, 102, 153, 0.6); border: 1px solid var(--neon-blue); color: #fff; max-width: 85%; }
         .ai-msg { align-self: flex-start; border: 1px solid var(--neon-gold); color: var(--neon-gold); background: rgba(255,183,0,0.05); max-width: 88%; white-space: pre-wrap; }
-        .input-row { display: flex; gap: 6px; }
-        .cmd-input { flex: 1; padding: 8px; background: #000; border: 1px solid var(--neon-blue); border-radius: 6px; color: #fff; font-size: 0.8rem; outline: none; }
-        .btn-action { background: var(--neon-blue); color: #000; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
+        .error-msg { border-color: var(--neon-red) !important; color: var(--neon-red) !important; background: rgba(255,0,60,0.08) !important; }
+        .msg-time { font-size: 0.45rem; opacity: 0.7; display: block; margin-top: 2px; text-align: right; }
+        
+        .code-output { background: #050b14; border: 1px dashed var(--neon-purple); color: var(--neon-green); padding: 5px; border-radius: 4px; font-size: 0.6rem; margin-top: 3px; white-space: pre-wrap; }
+        
+        .input-row { display: flex; gap: 5px; width: 100%; }
+        .cmd-input { flex: 1; padding: 6px; background: #000; border: 1px solid var(--neon-blue); border-radius: 6px; color: #fff; font-size: 0.75rem; outline: none; }
+        .btn-action { background: var(--neon-blue); color: #000; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.7rem; }
+        
+        .controls-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+        .btn-tool { background: rgba(0,0,0,0.6); border: 1px solid var(--neon-gold); color: var(--neon-gold); padding: 4px 2px; border-radius: 6px; cursor: pointer; font-size: 0.48rem; font-weight: bold; text-align: center; text-transform: uppercase; }
+        .btn-tool:hover { background: rgba(255,183,0,0.2); }
+        .cam-preview { width: 100%; height: 90px; background: #000; border: 1px solid var(--neon-purple); border-radius: 6px; display: none; object-fit: cover; margin-top: 3px; }
     </style>
 </head>
 <body>
 
-    <div class="hud-container">
-        <div class="header">
-            <span>⚡ OMNI-JARVIS v11.1</span>
-            <span style="font-size:0.5rem; color:#00ff66;">● ONLINE</span>
-        </div>
+<canvas id="bgCanvas"></canvas>
 
-        <div class="chat-box" id="chatBox">
-            <div class="msg sys-msg">[SYSTEM] Ready, Boss! Type your query below.</div>
-        </div>
+<!-- BOOT-UP SEQUENCE SCREEN -->
+<div id="bootScreen">
+    <div class="boot-reactor"><div class="boot-inner"></div></div>
+    <h2 style="color:var(--neon-blue); font-size:1rem; margin-bottom:10px; letter-spacing:2px;">OMNI-JARVIS v12.0 GOD MODE</h2>
+    <div class="boot-logs" id="bootLogs">Initializing system core...</div>
+</div>
 
-        <div class="input-row">
-            <input type="text" id="userPrompt" class="cmd-input" placeholder="Ask Jarvis anything..." autofocus>
-            <button class="btn-action" id="sendBtn">SEND</button>
+<div class="hud-container" id="mainContainer">
+    <div class="header">
+        <span>⚡ OMNI-JARVIS v12.0 GOD MODE</span>
+        <span class="badge" id="sysBadge">● ONLINE <span id="uptimeCounter">00:00:00</span></span>
+    </div>
+
+    <!-- SYSTEM TICKER -->
+    <div class="ticker-wrap">
+        <div class="ticker" id="systemTicker">✨ OMNI-JARVIS READY FOR DEPLOYMENT. ALL COLONY SUBSYSTEMS FULLY OPERATIONAL. BOSS ONLINE.</div>
+    </div>
+
+    <!-- CUSTOM GEMS SELECTOR -->
+    <div class="gem-selector">
+        <div class="gem-btn active" id="gemStandard" onclick="setGemMode('standard')">JARVIS AI</div>
+        <div class="gem-btn" id="gemCoder" onclick="setGemMode('coder')">CODE GEM</div>
+        <div class="gem-btn" id="gemResearch" onclick="setGemMode('research')">RESEARCH</div>
+        <div class="gem-btn" id="gemCoach" onclick="setGemMode('coach')">COACH GEM</div>
+    </div>
+
+    <!-- TOOL TABS NAVIGATION -->
+    <div class="tools-nav">
+        <div class="tool-tab active" onclick="switchTab('chat')">💬 CHAT</div>
+        <div class="tool-tab" onclick="switchTab('todo')">📋 TODO</div>
+        <div class="tool-tab" onclick="switchTab('notes')">📓 NOTES</div>
+        <div class="tool-tab" onclick="switchTab('calc')">🧮 CALC</div>
+        <div class="tool-tab" onclick="switchTab('weather')">🌤️ WEATHER</div>
+        <div class="tool-tab" onclick="switchTab('memory')">🧠 MEMORY</div>
+    </div>
+
+    <div class="core-dashboard">
+        <div class="hud-card">
+            <div class="hud-title" id="reactorTitle">AI CORE (IDLE)</div>
+            <div class="reactor-core" id="reactorCore"><div class="reactor-inner" id="reactorInner"></div></div>
+            <div style="font-size:0.48rem; color:var(--neon-green);" id="voiceStatus">1. VOICE CHAT OFF</div>
+        </div>
+        <div class="hud-card" style="display:flex; flex-direction:column; justify-content:space-around;">
+            <div class="hud-title">ACTIVE ENGINES</div>
+            <div class="telemetry-row"><span>2. GPS COLONY:</span> <span style="color:var(--neon-green);">ONLINE</span></div>
+            <div class="telemetry-row"><span>3. LIVE VISION:</span> <span style="color:var(--neon-purple);">READY</span></div>
+            <div class="telemetry-row"><span>4. JS SANDBOX:</span> <span style="color:var(--neon-green);">ACTIVE</span></div>
+            <div class="telemetry-row"><span>BATTERY:</span> <span style="color:var(--neon-gold);" id="batteryStatus">100%</span></div>
         </div>
     </div>
 
-    <script>
-        const GROQ_KEY = "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";
+    <!-- TAB PANELS -->
+    <div class="panel-view" id="panelTodo">
+        <div style="font-weight:bold; color:var(--neon-gold); margin-bottom:4px;">📋 TASK MANAGER</div>
+        <div style="display:flex; gap:4px; margin-bottom:4px;">
+            <input type="text" id="todoInput" placeholder="Add task..." style="flex:1; background:#000; border:1px solid var(--neon-blue); color:#fff; padding:3px; font-size:0.6rem;">
+            <button onclick="addTodo()" style="background:var(--neon-blue); border:none; padding:3px 6px; font-weight:bold; font-size:0.6rem;">ADD</button>
+        </div>
+        <div id="todoList" style="display:flex; flex-direction:column; gap:2px;"></div>
+    </div>
 
-        function printMsg(sender, text, cls) {
-            const box = document.getElementById("chatBox");
-            const div = document.createElement("div");
-            div.className = "msg " + cls;
-            div.innerHTML = "<b>" + sender + ":</b> " + text;
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
-        }
+    <div class="panel-view" id="panelNotes">
+        <div style="font-weight:bold; color:var(--neon-gold); margin-bottom:4px;">📓 QUICK JOURNAL / NOTES</div>
+        <textarea id="notesArea" placeholder="Jot down encrypted notes here..." oninput="saveNotes()" style="width:100%; height:80px; background:#000; border:1px solid var(--neon-purple); color:#fff; padding:4px; font-size:0.6rem; resize:none;"></textarea>
+    </div>
 
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(text.slice(0, 150));
-                window.speechSynthesis.speak(u);
-            }
-        }
+    <div class="panel-view" id="panelCalc">
+        <div style="font-weight:bold; color:var(--neon-gold); margin-bottom:4px;">🧮 SMART CALCULATOR & UNIT CONVERTER</div>
+        <div style="display:flex; gap:4px; margin-bottom:4px;">
+            <input type="text" id="calcInput" placeholder="e.g. 45 * 12 or 100 USD to INR" style="flex:1; background:#000; border:1px solid var(--neon-blue); color:#fff; padding:3px; font-size:0.6rem;" onkeypress="if(event.key==='Enter') runCalc()">
+            <button onclick="runCalc()" style="background:var(--neon-blue); border:none; padding:3px 6px; font-weight:bold; font-size:0.6rem;">SOLVE</button>
+        </div>
+        <div id="calcOutput" class="code-output">Result output will appear here.</div>
+    </div>
 
-        async function queryAI(prompt) {
-            try {
-                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: { 
-                        "Content-Type": "application/json", 
-                        "Authorization": "Bearer " + GROQ_KEY 
-                    },
-                    body: JSON.stringify({
-                        model: "llama-3.3-70b-versatile",
-                        messages: [
-                            { role: "system", content: "You are OMNI-JARVIS. Reply directly in Marathi, Hindi or English." }, 
-                            { role: "user", content: prompt }
-                        ],
-                        temperature: 0.7,
-                        max_tokens: 400
-                    })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    return data?.choices?.[0]?.message?.content || "Executed successfully, Boss!";
-                }
-            } catch(e) {}
-            
-            // Fallback response if API fails so message never gets stuck
-            return `बॉस, तुमचं म्हणणं मिळालं: "${prompt}". ओम्नी-जार्व्हिस पूर्ण पॉवरमध्ये चालू आहे!`;
-        }
+    <div class="panel-view" id="panelWeather">
+        <div style="font-weight:bold; color:var(--neon-gold); margin-bottom:4px;">🌤️ LIVE WEATHER & ENVIRONMENT</div>
+        <div id="weatherInfo" style="color:var(--neon-green);">Fetching atmospheric telemetry...</div>
+    </div>
 
-        async function runCommand() {
-            const input = document.getElementById("userPrompt");
-            const text = input.value.trim();
-            if (!text) return;
-            
-            input.value = "";
-            printMsg("BOSS", text, "user-msg");
-            
-            printMsg("SYSTEM", "Processing...", "sys-msg");
-            const reply = await queryAI(text);
-            
-            // Remove system processing message if needed, then print reply
-            printMsg("JARVIS", reply, "ai-msg");
-            speak(reply);
-        }
+    <div class="panel-view" id="panelMemory">
+        <div style="font-weight:bold; color:var(--neon-gold); margin-bottom:4px;">🧠 CONTEXT MEMORY VAULT</div>
+        <div id="memoryList" style="display:flex; flex-direction:column; gap:2px;"></div>
+    </div>
 
-        // Event Listeners for smooth sending
-        document.getElementById("sendBtn").addEventListener("click", runCommand);
-        document.getElementById("userPrompt").addEventListener("keypress", function(e) {
-            if (e.key === 'Enter') {
-                runCommand();
-            }
+    <video id="webcam" class="cam-preview" autoplay playsinline></video>
+    <canvas id="snapshotCanvas" style="display:none;"></canvas>
+
+    <!-- CHAT BOX -->
+    <div class="chat-box" id="chatBox">
+        <div class="msg sys-msg">[SYSTEM] v12.0 God Mode Online. All systems fully synchronized, Boss!</div>
+    </div>
+
+    <div class="input-row">
+        <input type="text" id="userPrompt" class="cmd-input" placeholder="Type query, research topic, code or command..." onkeypress="if(event.key === 'Enter') onSendClick()">
+        <button class="btn-action" onclick="onSendClick()">EXECUTE ⚡</button>
+    </div>
+
+    <div class="controls-row">
+        <button class="btn-tool" onclick="toggleVoiceConversation()" style="border-color:var(--neon-blue); color:var(--neon-blue);" id="voiceBtn">1. VOICE</button>
+        <button class="btn-tool" onclick="fetchTrueGeolocation()" style="border-color:var(--neon-gold); color:var(--neon-gold);">2. LIVE GPS</button>
+        <button class="btn-tool" onclick="scanCameraVision()" style="border-color:var(--neon-purple); color:var(--neon-purple);">3. VISION</button>
+        <button class="btn-tool" onclick="executeSandboxConsole()" style="border-color:var(--neon-green); color:var(--neon-green);">4. SANDBOX</button>
+    </div>
+</div>
+
+<script>
+    const GROQ_KEY = "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";
+    const COHERE_KEY = "20xrjAOQAXSdeU5HnjsKf2IpbmkfPA2Vki9xKu1U";
+    const ELEVEN_KEY = "sk_74df699c74e7a19d485b4941a66d3d7c4389c37843c2efc3";
+    const VOICE_ID = "ThT5KcBeYPX3keUQqHPh";
+    
+    let history = JSON.parse(localStorage.getItem('jarvis_chat_history_v12') || '[]');
+    let audioPlayer = new Audio();
+    let isVoiceActive = false;
+    let recognition = null;
+    let activeGem = "standard";
+    let cloudMemoryVault = JSON.parse(localStorage.getItem('jarvis_memory_v12') || '[]');
+    let todoItems = JSON.parse(localStorage.getItem('jarvis_todos_v12') || '[]');
+    let idleTimer = null;
+    let uptimeSeconds = 0;
+
+    // --- PARTICLE BACKGROUND ENGINE ---
+    const bgCanvas = document.getElementById('bgCanvas');
+    const bCtx = bgCanvas.getContext('2d');
+    function resizeCanvas() { bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    let particles = [];
+    for(let i=0; i<60; i++) {
+        particles.push({
+            x: Math.random() * bgCanvas.width,
+            y: Math.random() * bgCanvas.height,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: (Math.random() - 0.5) * 0.5,
+            size: Math.random() * 2 + 1
         });
-    </script>
-</body>
-</html>
+    }
+    function drawParticles() {
+        bCtx.clearRect(0,0,bgCanvas.width, bgCanvas.height);
+        bCtx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+        particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            if(p.x < 0) p.x = bgCanvas.width; if(p.x > bgCanvas.width) p.x = 0;
+            if(p.y < 0) p.y = bgCanvas.height; if(p.y > bgCanvas.height) p.y = 0;
+            bCtx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+
+    // --- BOOT SEQUENCE ANIMATION ---
+    const bootLogsText = [
+        "INITIALIZING OMNI-JARVIS v12.0 GOD KERNEL...",
+        "MOUNTING QUANTUM NEURAL STORAGE...",
+        "CALIBRATING ARC REACTOR STABILITY...",
+        "CONNECTING GROQ & COHERE MULTI-AI BACKEND...",
+        "ACTIVATING BIOMETRIC & COLONY SENSORS...",
+        "ALL SYSTEMS ONLINE. WELCOME BACK, BOSS!"
+    ];
+    let logIdx = 0;
+    const bootInterval = setInterval(() => {
+        if(logIdx < bootLogsText.length) {
+            document.getElementById('bootLogs').innerHTML += `> ${bootLogsText[logIdx]}<br>`;
+            document.getElementById('bootLogs').scrollTop = document.getElementById('bootLogs').scrollHeight;
+            logIdx++;
+        } else {
+            clearInterval(bootInterval);
+            setTimeout(() => {
+                const bs = document.getElementById('bootScreen');
+                bs.style.opacity = '0';
+                setTimeout(() => bs.style.display = 'none', 800);
+                speak("ऑम्नी जार्व्हिस सिस्टीम पूर्णपणे कार्यरत आहे, बॉस!");
+                initUptimeAndIdle();
+                renderChatHistory();
+                renderTodos();
+                loadNotes();
+                renderMemory();
+            }, 600);
+        }
+    }, 350);
+
+    // --- UPTIME & IDLE PERSONALITY ---
+    function initUptimeAndIdle() {
+        setInterval(() => {
+            uptimeSeconds++;
+            let h = String(Math.floor(uptimeSeconds / 3600)).padStart(2,'0');
+            let m = String(Math.floor((uptimeSeconds % 3600) / 60)).padStart(2,'0');
+            let s = String(uptimeSeconds % 60).padStart(2,'0');
+            document.getElementById('uptimeCounter').innerText = `${h}:${m}:${s}`;
+        }, 1000);
+
+        resetIdleTimer();
+        window.addEventListener('mousemove', resetIdleTimer);
+        window.addEventListener('keydown', resetIdleTimer);
+        window.addEventListener('click', resetIdleTimer);
+    }
+
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+            const idleRemarks = [
+                "बॉस, तुम्ही खूप वेळ शांत आहात. काही नवीन प्रोजेक्टवर काम सुरू करायचं का?",
+                "सिस्टीम आयडल आहे. लाईव्ह वेदर किंवा GPS लोकेशन तपासायचं का?",
+                "सतर्कता कायम आहे, बॉस! काही नवीन हुकूम आहे का?"
+            ];
+            const remark = idleRemarks[Math.floor(Math.random() * idleRemarks.length)];
+            printMsg("JARVIS", `🤖 [IDLE ALERT]: ${remark}`, "ai-msg");
+            speak(remark);
+        }, 45000); // 45 seconds idle
+    }
+
+    function setReactorMood(mood) {
+        const title = document.getElementById('reactorTitle');
+        const core = document.getElementById('reactorCore');
+        const inner = document.getElementById('reactorInner');
+        if(mood === 'thinking') {
+            title.innerText = "AI CORE (THINKING)";
+            core.style.borderColor = "var(--neon-purple)";
+            inner.style.background = "var(--neon-purple)";
+            inner.style.boxShadow = "0 0 15px var(--neon-purple)";
+        } else if(mood === 'success') {
+            title.innerText = "AI CORE (SUCCESS)";
+            core.style.borderColor = "var(--neon-green)";
+            inner.style.background = "var(--neon-green)";
+            inner.style.boxShadow = "0 0 15px var(--neon-green)";
+        } else if(mood === 'alert') {
+            title.innerText = "AI CORE (ALERT)";
+            core.style.borderColor = "var(--neon-red)";
+            inner.style.background = "var(--neon-red)";
+            inner.style.boxShadow = "0 0 15px var(--neon-red)";
+        } else {
+            title.innerText = "AI CORE (IDLE)";
+            core.style.borderColor = "var(--neon-blue)";
+            inner.style.background = "var(--neon-purple)";
+            inner.style.boxShadow = "0 0 12px var(--neon-purple)";
+        }
+    }
+
+    // --- TABS S
