@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OMNI-JARVIS v12.1 GOD MODE</title>
+    <title>OMNI-JARVIS v12.2 GOD MODE</title>
     <style>
         :root {
             --neon-blue: #00f0ff;
@@ -19,10 +19,6 @@
         body { background-color: var(--bg-space); color: #e6edf3; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 4px; overflow: hidden; position: relative; }
         
         #bgCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-
-        #bootScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.5s ease; }
-        .boot-reactor { width: 70px; height: 70px; border: 3px dashed var(--neon-blue); border-radius: 50%; display: flex; justify-content: center; align-items: center; animation: spin 2s linear infinite; margin-bottom: 15px; }
-        .boot-inner { width: 30px; height: 30px; background: var(--neon-blue); border-radius: 50%; box-shadow: 0 0 20px var(--neon-blue); }
 
         .hud-container { width: 100%; max-width: 520px; background: var(--hud-panel); border: 2px solid var(--neon-blue); border-radius: 14px; padding: 8px; box-shadow: 0 0 35px var(--glow); display: flex; flex-direction: column; gap: 6px; backdrop-filter: blur(10px); position: relative; max-height: 98vh; }
         
@@ -72,15 +68,9 @@
 
 <canvas id="bgCanvas"></canvas>
 
-<div id="bootScreen">
-    <div class="boot-reactor"><div class="boot-inner"></div></div>
-    <h2 style="color:var(--neon-blue); font-size:0.9rem; margin-bottom:8px; letter-spacing:1px;">OMNI-JARVIS v12.1 GOD MODE</h2>
-    <div style="font-size:0.6rem; color:var(--neon-green);" id="bootStatus">Loading System Core...</div>
-</div>
-
 <div class="hud-container">
     <div class="header">
-        <span>⚡ OMNI-JARVIS v12.1</span>
+        <span>⚡ OMNI-JARVIS v12.2</span>
         <span class="badge" id="sysBadge">● ONLINE</span>
     </div>
 
@@ -154,7 +144,7 @@
     <video id="webcam" class="cam-preview" autoplay playsinline></video>
 
     <div class="chat-box" id="chatBox">
-        <div class="msg sys-msg">[SYSTEM] v12.1 God Mode Online. All systems fully synchronized, Boss!</div>
+        <div class="msg sys-msg">[SYSTEM] v12.2 God Mode Online. All systems fully synchronized, Boss!</div>
     </div>
 
     <div class="input-row">
@@ -214,17 +204,12 @@
     }
     drawParticles();
 
-    // Fast Boot loader removal to prevent hanging
+    // Initialize UI on load
     window.onload = function() {
-        setTimeout(() => {
-            const bs = document.getElementById('bootScreen');
-            bs.style.opacity = '0';
-            setTimeout(() => bs.style.display = 'none', 500);
-            renderChatHistory();
-            renderTodos();
-            loadNotes();
-            renderMemory();
-        }, 800);
+        renderChatHistory();
+        renderTodos();
+        loadNotes();
+        renderMemory();
     };
 
     function switchTab(tabName) {
@@ -354,4 +339,22 @@
     function deleteTodo(idx) {
         todoItems.splice(idx, 1);
         saveTodos();
-        renderTo
+        renderTodos();
+    }
+    function saveTodos() { localStorage.setItem('jarvis_todos_v12', JSON.stringify(todoItems)); }
+    function renderTodos() {
+        const list = document.getElementById('todoList');
+        list.innerHTML = '';
+        todoItems.forEach((item, idx) => {
+            list.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.5); padding:3px 6px; border-radius:4px; border:1px solid rgba(0,240,255,0.2);">
+                <span onclick="toggleTodo(${idx})" style="cursor:pointer; text-decoration:${item.done ? 'line-through' : 'none'}; color:${item.done ? '#8b949e' : '#fff'};">${item.text}</span>
+                <button onclick="deleteTodo(${idx})" style="background:none; border:none; color:var(--neon-red); cursor:pointer; font-weight:bold;">✕</button>
+            </div>`;
+        });
+    }
+
+    function saveNotes() { localStorage.setItem('jarvis_notes_v12', document.getElementById('notesArea').value); }
+    function loadNotes() { document.getElementById('notesArea').value = localStorage.getItem('jarvis_notes_v12') || ''; }
+
+    function runCalc() {
+        const val = document.getElementById('calcInput'
